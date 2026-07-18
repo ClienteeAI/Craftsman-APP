@@ -15,6 +15,16 @@ import { getSupabase, withDbRetry } from "@/lib/supabase";
  * Přepnutí je čistě otázka vyplnění klíčů — kód se nemění.
  */
 
+/** Jedna cenová úroveň pro výběr zákazníkem („zeptej se manželky"). */
+export type OfferTier = {
+  id: string;
+  name: string;
+  productName: string;
+  range: { from: number; to: number };
+  totals: { totalExVat: number; totalIncVat: number };
+  items: PricedItem[];
+};
+
 export type SharedQuote = {
   id: string;
   createdAt: string;
@@ -42,6 +52,14 @@ export type SharedQuote = {
   openedAt: string | null;
   /** Kdy zákazník ťukl "Mám záujem". Nejsilnější signál v celé apce. */
   interestedAt: string | null;
+  /** 3 cenové úrovně na výběr. Prázdné = klasická nabídka s jednou cenou. */
+  tiers: OfferTier[];
+  /** Kterou úroveň si zákazník vybral (id). */
+  chosenTier: string | null;
+  /** Kdy zákazník nabídku závazně podepsal. */
+  signedAt: string | null;
+  /** Podpis zákazníka (podepsaný odkaz na obrázek ve storage). */
+  signatureUrl: string | null;
 };
 
 /**
@@ -117,11 +135,18 @@ function rowToQuote(r: Record<string, unknown>): SharedQuote {
     videoId: (r.video_id as string) ?? null,
     openedAt: (r.opened_at as string) ?? null,
     interestedAt: (r.interested_at as string) ?? null,
+    tiers: (r.tiers as OfferTier[]) ?? [],
+    chosenTier: (r.chosen_tier as string) ?? null,
+    signedAt: (r.signed_at as string) ?? null,
+    signatureUrl: (r.signature_url as string) ?? null,
   };
 }
 
 export async function saveQuote(
-  q: Omit<SharedQuote, "id" | "createdAt" | "openedAt" | "interestedAt">,
+  q: Omit<
+    SharedQuote,
+    "id" | "createdAt" | "openedAt" | "interestedAt" | "chosenTier" | "signedAt" | "signatureUrl"
+  >,
   userId: string | null = null,
 ): Promise<SharedQuote> {
   const saved: SharedQuote = {
@@ -130,6 +155,9 @@ export async function saveQuote(
     createdAt: new Date().toISOString(),
     openedAt: null,
     interestedAt: null,
+    chosenTier: null,
+    signedAt: null,
+    signatureUrl: null,
   };
 
   const db = getSupabase();
@@ -162,6 +190,7 @@ export async function saveQuote(
         assumptions: saved.assumptions,
         image_url: imageRef,
         media,
+        tiers: saved.tiers,
         video_id: saved.videoId,
       }),
     );
@@ -190,6 +219,7 @@ export async function getQuote(id: string): Promise<SharedQuote | undefined> {
         quote.variants.map(async (v) => ({ key: v.key, url: await resolveRef(db, v.url) })),
       )
     ).filter((v): v is { key: string; url: string } => v.url != null);
+    quote.signatureUrl = await resolveRef(db, quote.signatureUrl);
     return quote;
   }
   return mem.get(id);
@@ -251,5 +281,50 @@ export async function markInterested(id: string): Promise<boolean> {
   if (!q.openedAt) q.openedAt = now;
   if (q.interestedAt) return false;
   q.interestedAt = now;
+  return true;
+}
+
+/**
+ * Zákazník si vybral cenovú úroveň („zeptej se manželky"). Uloží volbu a
+ * zároveň označí zájem. Vrací true, když je to první projev zájmu (pro push).
+ */
+export async function chooseTier(id: string, tierId: string): Promise<boolean> {
+  const db = getSupabase();
+  if (db) {
+    const { error } = await withDbRetry(() =>
+      db.from("quotes").update({ chosen_tier: tierId }).eq("id", id).select("id"),
+    );
+    if (error) throw new Error(`Uloženie voľby zlyhalo: ${error.message}`);
+  } else {
+    const q = mem.get(id);
+    if (q) q.chosenTier = tierId;
+  }
+  return markInterested(id);
+}
+
+/**
+ * Zákazník nabídku závazně podepsal. Uloží podpis (obrázek) + čas. Vrací true
+ * jen poprvé — to je ta chvíle „z týdnů na hodinu".
+ */
+export async function signQuote(id: string, signatureDataUrl: string): Promise<boolean> {
+  const now = new Date().toISOString();
+  const db = getSupabase();
+  if (db) {
+    const ref = await uploadImage(db, `${id}-signature`, signatureDataUrl);
+    const { data, error } = await withDbRetry(() =>
+      db
+        .from("quotes")
+        .update({ signed_at: now, signature_url: ref })
+        .eq("id", id)
+        .is("signed_at", null)
+        .select("id"),
+    );
+    if (error) throw new Error(`Uloženie podpisu zlyhalo: ${error.message}`);
+    return (data?.length ?? 0) > 0;
+  }
+  const q = mem.get(id);
+  if (!q || q.signedAt) return false;
+  q.signedAt = now;
+  q.signatureUrl = signatureDataUrl;
   return true;
 }

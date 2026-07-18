@@ -3,6 +3,8 @@ import { getQuote, markOpened } from "@/lib/quote/store";
 import { notifyQuoteOwner } from "@/lib/push/send";
 import InterestButtons from "./interest-buttons";
 import OfferVisual from "./offer-visual";
+import TierVote from "./tier-vote";
+import SignOffer from "./sign-offer";
 
 /**
  * Nabídka pro zákazníka. Odkaz místo PDF.
@@ -78,27 +80,41 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
           />
         )}
 
-        <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6">
-          <p className="text-xs uppercase tracking-widest text-neutral-400">Orientačná cena</p>
-          <p className="mt-1 text-4xl font-semibold tracking-tight">
-            {eur(q.range.from)} – {eur(q.range.to)}
-          </p>
-          <p className="mt-1 text-sm text-neutral-500">
-            bez DPH · {eur(q.totals.totalIncVat)} s DPH
-          </p>
-          <p className="mt-4 text-[15px] leading-relaxed text-neutral-600">
-            {q.tierName} — {q.productName}
-          </p>
-          {q.earliestTerm && (
-            <div className="mt-4 flex items-center gap-2 border-t border-neutral-100 pt-4">
-              <span className="text-neutral-400">📅</span>
-              <span className="text-[15px]">
-                Najbližší voľný termín:{" "}
-                <span className="font-medium">{q.earliestTerm}</span>
-              </span>
-            </div>
-          )}
-        </section>
+        {q.tiers.length > 0 ? (
+          <>
+            <TierVote id={q.id} tiers={q.tiers} initialChosen={q.chosenTier} />
+            {q.earliestTerm && (
+              <div className="mt-4 flex items-center gap-2 rounded-2xl border border-neutral-200 bg-white p-5">
+                <span className="text-neutral-400">📅</span>
+                <span className="text-[15px]">
+                  Najbližší voľný termín: <span className="font-medium">{q.earliestTerm}</span>
+                </span>
+              </div>
+            )}
+          </>
+        ) : (
+          <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-6">
+            <p className="text-xs uppercase tracking-widest text-neutral-400">Orientačná cena</p>
+            <p className="mt-1 text-4xl font-semibold tracking-tight">
+              {eur(q.range.from)} – {eur(q.range.to)}
+            </p>
+            <p className="mt-1 text-sm text-neutral-500">
+              bez DPH · {eur(q.totals.totalIncVat)} s DPH
+            </p>
+            <p className="mt-4 text-[15px] leading-relaxed text-neutral-600">
+              {q.tierName} — {q.productName}
+            </p>
+            {q.earliestTerm && (
+              <div className="mt-4 flex items-center gap-2 border-t border-neutral-100 pt-4">
+                <span className="text-neutral-400">📅</span>
+                <span className="text-[15px]">
+                  Najbližší voľný termín:{" "}
+                  <span className="font-medium">{q.earliestTerm}</span>
+                </span>
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="mt-4 overflow-hidden rounded-2xl border border-neutral-200 bg-white">
           <div className="border-b border-neutral-100 p-5">
@@ -155,6 +171,9 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
             </>
           )}
         </p>
+
+        {/* Závazný podpis přímo v odkazu — z týdnů na hodinu. */}
+        <SignOffer id={q.id} initialSigned={q.signedAt != null} />
       </div>
 
       {/* Pod palcem. Zákazník to čte na telefonu. Ťuknutí zároveň dá majstrovi

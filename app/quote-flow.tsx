@@ -66,6 +66,8 @@ export default function QuoteFlow({ company }: { company: string }) {
   } | null>(null);
   const [sharing, setSharing] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  // „Zeptej se manželky" — poslat všechny 3 úrovně, ať si zákazník vybere.
+  const [letChoose, setLetChoose] = useState(false);
 
   const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -240,6 +242,21 @@ export default function QuoteFlow({ company }: { company: string }) {
           imageDataUrl,
           beforeImageUrl: gallery.before,
           variants: gallery.variants,
+          // „Zeptej se manželky": pošleme všechny 3 úrovně na výběr.
+          tiers:
+            letChoose && result
+              ? result.tiers.map((t) => ({
+                  id: t.id,
+                  name: t.name,
+                  productName: `${t.product.brand} ${t.product.model}`,
+                  range: t.quote.range,
+                  totals: {
+                    totalExVat: t.quote.totalExVat,
+                    totalIncVat: t.quote.totalIncVat,
+                  },
+                  items: t.quote.items,
+                }))
+              : [],
           videoId,
         }),
       });
@@ -505,6 +522,26 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
               onUploading={setVideoUploading}
             />
 
+            {/* „Zeptej se manželky" — nechat zákazníka vybrat z 3 úrovní. */}
+            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-neutral-200 p-4">
+              <input
+                type="checkbox"
+                checked={letChoose}
+                onChange={(e) => {
+                  setLetChoose(e.target.checked);
+                  setShareUrl(null); // změna → nabídka se musí vytvořit znovu
+                }}
+                className="mt-0.5 h-5 w-5"
+              />
+              <span>
+                <span className="text-[15px] font-medium">Nechať zákazníka vybrať z 3 cien</span>
+                <span className="mt-0.5 block text-sm text-neutral-500">
+                  Zákazník (aj manželka) uvidí všetky tri úrovne a vyberie si — nerozhoduje
+                  áno/nie, ale ktorú. Dáme ti vedieť, čo si vybral.
+                </span>
+              </span>
+            </label>
+
             <ShareBar
               url={shareUrl}
               sharing={sharing}
@@ -513,6 +550,7 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
               customerName={customer.name}
               companyName={company}
               hasVideo={!!videoId}
+              tiers={letChoose ? result.tiers.map((t) => ({ id: t.id, name: t.name })) : undefined}
             />
           </div>
         )}
@@ -969,6 +1007,7 @@ function ShareBar({
   customerName,
   companyName,
   hasVideo,
+  tiers,
 }: {
   url: string | null;
   sharing: boolean;
@@ -977,12 +1016,17 @@ function ShareBar({
   customerName: string | null;
   companyName: string;
   hasVideo: boolean;
+  /** Úrovně, když je poslal na výběr — pro zobrazení názvu vybrané. */
+  tiers?: { id: string; name: string }[];
 }) {
   const [copied, setCopied] = useState(false);
   const [openedAt, setOpenedAt] = useState<string | null>(null);
   const [interestedAt, setInterestedAt] = useState<string | null>(null);
+  const [chosenTier, setChosenTier] = useState<string | null>(null);
+  const [signedAt, setSignedAt] = useState<string | null>(null);
 
   const id = url?.split("/p/")[1] ?? null;
+  const chosenName = tiers?.find((t) => t.id === chosenTier)?.name ?? null;
 
   // Předvyplněná zpráva, kterou zákazník uvidí ve WhatsAppe/SMS.
   const greeting = customerName ? `Dobrý deň ${customerName.split(" ")[0]}` : "Dobrý deň";
@@ -999,9 +1043,9 @@ function ShareBar({
    * i se zavřenou appkou. Zatím to funguje, jen musí mít obrazovku otevřenou.
    */
   useEffect(() => {
-    // Ptáme se dál i po otevření — dokud zákazník neťukne "Mám záujem".
-    // Zájem je ta událost, kvůli které má majster zvednout telefon.
-    if (!id || interestedAt) return;
+    // Ptáme se dál až do podpisu — to je finální stav. Cestou zachytíme
+    // otevření, zájem i výběr úrovně.
+    if (!id || signedAt) return;
     const timer = setInterval(async () => {
       try {
         const res = await fetch(`/api/share/${id}`, { cache: "no-store" });
@@ -1009,12 +1053,14 @@ function ShareBar({
         const body = await res.json();
         if (body.openedAt) setOpenedAt(body.openedAt);
         if (body.interestedAt) setInterestedAt(body.interestedAt);
+        if (body.chosenTier) setChosenTier(body.chosenTier);
+        if (body.signedAt) setSignedAt(body.signedAt);
       } catch {
         // Výpadek sítě na střeše — zkusíme to za tři vteřiny znovu.
       }
     }, 3000);
     return () => clearInterval(timer);
-  }, [id, interestedAt]);
+  }, [id, signedAt]);
 
   if (!url) {
     return (
@@ -1041,9 +1087,50 @@ function ShareBar({
 
   return (
     <div className="space-y-3">
+      {/* Podpis je vrchol — závazná objednávka. Nejsilnější banner. */}
+      {signedAt && (
+        <div className="rounded-2xl border-2 border-green-700 bg-green-700 p-5 text-white">
+          <p className="text-xs font-semibold uppercase tracking-widest text-white">
+            ✍️ Zákazník podpísal!
+          </p>
+          <p className="mt-2 text-[15px] leading-relaxed">
+            Závazne objednal{chosenName ? ` (${chosenName})` : ""}. Ozvi sa a dohodni termín.
+          </p>
+          <p className="mt-1 text-xs text-green-100">{new Date(signedAt).toLocaleString("sk-SK")}</p>
+          {customerPhone && (
+            <a
+              href={`tel:${customerPhone}`}
+              className="mt-4 flex items-center justify-center rounded-xl bg-white py-3 text-base font-semibold text-green-700 active:opacity-80"
+            >
+              Zavolať {customerName ? customerName.split(" ")[0] : "zákazníkovi"}
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Výběr úrovně — zákazník řekl KTOROU. Silnější než pouhý zájem. */}
+      {chosenTier && !signedAt && (
+        <div className="rounded-2xl border-2 border-green-600 bg-green-600 p-5 text-white">
+          <p className="text-xs font-semibold uppercase tracking-widest text-white">
+            🔥 Zákazník si vybral{chosenName ? `: ${chosenName}` : ""}!
+          </p>
+          <p className="mt-2 text-[15px] leading-relaxed">
+            Rozhodol sa pre úroveň. Zavolaj mu teraz, dokým je rozhodnutý.
+          </p>
+          {customerPhone && (
+            <a
+              href={`tel:${customerPhone}`}
+              className="mt-4 flex items-center justify-center rounded-xl bg-white py-3 text-base font-semibold text-green-700 active:opacity-80"
+            >
+              Zavolať {customerName ? customerName.split(" ")[0] : "zákazníkovi"}
+            </a>
+          )}
+        </div>
+      )}
+
       {/* Zájem je silnější událost než otevření — vlastní, výraznější banner.
-          Když přišel zájem, "otvoril si" už neukazujeme, ať je signál čistý. */}
-      {interestedAt && (
+          Když přišel výběr/podpis, tenhle už neukazujeme, ať je signál čistý. */}
+      {interestedAt && !chosenTier && !signedAt && (
         <div className="rounded-2xl border-2 border-green-600 bg-green-600 p-5 text-white">
           <p className="text-xs font-semibold uppercase tracking-widest text-white">
             🔥 Zákazník má záujem!
@@ -1068,7 +1155,7 @@ function ShareBar({
 
       {/* "Zákazník si otvoril" se přidá NAD tlačítka, ne místo nich — ať jde
           nabídku poslat znova (třeba přes iný kanál, keď na prvé neodpovedal). */}
-      {openedAt && !interestedAt && (
+      {openedAt && !interestedAt && !chosenTier && !signedAt && (
         <div className="rounded-2xl border-2 border-neutral-900 bg-neutral-900 p-5 text-white">
           <p className="text-xs font-semibold uppercase tracking-widest text-green-400">
             Zákazník si ponuku otvoril

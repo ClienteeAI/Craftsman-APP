@@ -20,7 +20,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   if (!q) return NextResponse.json({ error: "Ponuka neexistuje." }, { status: 404 });
 
   return NextResponse.json(
-    { id: q.id, openedAt: q.openedAt, interestedAt: q.interestedAt, createdAt: q.createdAt },
+    {
+      id: q.id,
+      openedAt: q.openedAt,
+      interestedAt: q.interestedAt,
+      chosenTier: q.chosenTier,
+      signedAt: q.signedAt,
+      createdAt: q.createdAt,
+    },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
         imageDataUrl: body.imageDataUrl ?? null,
         beforeImageUrl: body.beforeImageUrl ?? null,
         variants: Array.isArray(body.variants) ? body.variants : [],
+        tiers: Array.isArray(body.tiers) ? body.tiers : [],
         videoId: body.videoId ?? null,
       },
       userId,

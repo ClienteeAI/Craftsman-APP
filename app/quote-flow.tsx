@@ -437,7 +437,7 @@ export default function QuoteFlow({ company }: { company: string }) {
 
 Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, telefón aj strechu. Fotky prilož nižšie."
                 rows={5}
-                className="w-full resize-none rounded-xl border border-neutral-200 p-4 text-base outline-none placeholder:text-neutral-400 focus:border-brand-500"
+                className="w-full resize-none rounded-xl border-2 border-neutral-300 bg-white p-4 text-base shadow-soft outline-none transition placeholder:text-neutral-400 hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
               />
 
               {/* Fotky z mailu — príloha alebo vloženie zo schránky. */}

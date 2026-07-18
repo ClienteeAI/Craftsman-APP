@@ -40,10 +40,47 @@ export function saveProfile(p: CraftsmanProfile): void {
   } catch (e) {
     console.warn("[profil] neuloženo:", e);
   }
+  backup(p);
 }
 
 /** Nastavil si už majster svoje sazby, nebo pořád jede na mých odhadech? */
 export function isConfigured(): boolean {
   if (typeof window === "undefined") return false;
   return localStorage.getItem(KEY) !== null;
+}
+
+/**
+ * Cloudová záloha profilu, fire-and-forget. Když Supabase není, endpoint vrátí
+ * synced:false a nic se neděje. Nikdy nesmí shodit UI — spolkne .catch().
+ */
+function backup(p: CraftsmanProfile): void {
+  if (typeof window === "undefined") return;
+  fetch("/api/profile", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(p),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+/**
+ * Obnova profilu ze zálohy — jen když si ho majster na tomto zařízení ještě
+ * nenastavil. Nový/vyměněný telefon si tak stáhne sazby a logo. Vrací true,
+ * když se něco obnovilo (ať se stránka překreslí).
+ */
+export async function restoreProfileIfMissing(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (isConfigured()) return false;
+  try {
+    const res = await fetch("/api/profile", { cache: "no-store" });
+    if (!res.ok) return false;
+    const body = await res.json();
+    if (body.synced && body.profile) {
+      localStorage.setItem(KEY, JSON.stringify(body.profile));
+      return true;
+    }
+  } catch {
+    // Bez signálu zůstaneme u výchozích, zkusí se to při dalším otevření.
+  }
+  return false;
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { DEFAULT_PROFILE, type CraftsmanProfile } from "@/lib/quote/profile";
-import { loadProfile, saveProfile } from "@/lib/quote/profile-store";
+import { loadProfile, restoreProfileIfMissing, saveProfile } from "@/lib/quote/profile-store";
 
 /**
  * Profil realizátora — ze zadání klienta:
@@ -20,7 +20,13 @@ export default function Profil() {
   const [p, setP] = useState<CraftsmanProfile>(DEFAULT_PROFILE);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => setP(loadProfile()), []);
+  useEffect(() => {
+    setP(loadProfile());
+    // Nový/vyměněný telefon: když tu profil ještě není, stáhneme ho ze zálohy.
+    void restoreProfileIfMissing().then((restored) => {
+      if (restored) setP(loadProfile());
+    });
+  }, []);
 
   function update(patch: Partial<CraftsmanProfile>) {
     setP((prev) => ({ ...prev, ...patch }));

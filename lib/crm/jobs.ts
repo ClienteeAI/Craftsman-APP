@@ -19,12 +19,12 @@ import type { JobDetails } from "./job-details";
 
 export type JobStatus = "novy" | "ponuka" | "realizacia" | "hotovo" | "straceny";
 
-export const STATUS: Record<JobStatus, { label: string; dot: string; order: number }> = {
-  novy: { label: "Nový kontakt", dot: "🟢", order: 0 },
-  ponuka: { label: "Ponuka", dot: "📐", order: 1 },
-  realizacia: { label: "Realizácia", dot: "🔨", order: 2 },
-  hotovo: { label: "Hotovo", dot: "✅", order: 3 },
-  straceny: { label: "Stratený", dot: "❌", order: 4 },
+export const STATUS: Record<JobStatus, { label: string; dot: string; order: number; cls: string }> = {
+  novy: { label: "Nový kontakt", dot: "🟢", order: 0, cls: "bg-neutral-100 text-neutral-600" },
+  ponuka: { label: "Ponuka", dot: "📐", order: 1, cls: "bg-amber-50 text-amber-700" },
+  realizacia: { label: "Realizácia", dot: "🔨", order: 2, cls: "bg-brand-100 text-brand-800" },
+  hotovo: { label: "Hotovo", dot: "✅", order: 3, cls: "bg-brand-50 text-brand-700" },
+  straceny: { label: "Stratený", dot: "❌", order: 4, cls: "bg-red-50 text-red-600" },
 };
 
 export type Job = {

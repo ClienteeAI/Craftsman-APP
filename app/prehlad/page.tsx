@@ -48,6 +48,12 @@ export default function Dashboard() {
   const newPrev = jobs.filter((j) => inMonth(j, 1)).length;
   const clientsDelta = newThis - newPrev;
 
+  // Realizované zákazky (v realizácii) + súhrnná cena.
+  const realizacia = jobs.filter((j) => j.status === "realizacia");
+  const realizaciaSum = realizacia.reduce((a, j) => a + (j.priceExVat ?? 0), 0);
+  // Kontakty bez ponuky — komu ešte nikto neposlal ponuku (príležitosť).
+  const bezPonuky = jobs.filter((j) => !j.shareUrl && j.status !== "straceny").length;
+
   // ── Graf tržieb za 6 mesiacov ──────────────────────────────────────────
   const chart = useMemo(() => {
     const buckets: { label: string; value: number }[] = [];
@@ -109,7 +115,7 @@ export default function Dashboard() {
         </header>
 
         {/* ── KPI karty ───────────────────────────────────────────────── */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
           <Kpi
             label="Zákazníci"
             value={String(clients)}
@@ -118,6 +124,17 @@ export default function Dashboard() {
             href="/zakaznici"
           />
           <Kpi label="Tržby (odoslané ponuky)" value={eur(revenue)} sub="spolu bez DPH" />
+          <Kpi
+            label="V realizácii"
+            value={realizacia.length ? eur(realizaciaSum) : "—"}
+            sub={`${realizacia.length} ${realizacia.length === 1 ? "zákazka" : "zákaziek"}`}
+          />
+          <Kpi
+            label="Kontakty bez ponuky"
+            value={String(bezPonuky)}
+            sub={bezPonuky > 0 ? "príležitosť naceniť" : "všetci majú ponuku"}
+            href="/zakaznici"
+          />
           <Kpi
             label="Úspešnosť"
             value={stats.closed >= 3 ? `${stats.winRate} %` : "—"}
@@ -325,7 +342,7 @@ function Tab({ active, onClick, children }: { active: boolean; onClick: () => vo
 function StatusPill({ status }: { status: JobStatus }) {
   const s = STATUS[status];
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium">
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${s.cls}`}>
       {s.dot} {s.label}
     </span>
   );

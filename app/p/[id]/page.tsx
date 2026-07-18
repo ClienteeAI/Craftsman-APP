@@ -19,11 +19,11 @@ const eur = (n: number) =>
 
 export default async function PublicQuote({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const q = getQuote(id);
+  const q = await getQuote(id);
   if (!q) notFound();
 
   // Zaznamená první otevření. Řemeslník pak ví, kdy zvednout telefon.
-  markOpened(id);
+  await markOpened(id);
 
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900">

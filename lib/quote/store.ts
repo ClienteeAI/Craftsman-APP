@@ -1,14 +1,18 @@
 import { randomBytes } from "crypto";
 import type { PricedItem } from "./pricing";
+import { getSupabase } from "@/lib/supabase";
 
 /**
  * Uložené nabídky, na které se posílá odkaz zákazníkovi.
  *
- * ⚠️ PAMĚŤ PROCESU. Přežije do restartu serveru a na Vercelu se o ni instance
- * nepodělí — zákazník by klikl na odkaz a viděl 404. Před ostrým provozem
- * MUSÍ do databáze (tabulka `quotes` + obrázek do R2/Supabase storage).
+ * ═══ DVA REŽIMY ═══
+ * Když je nastavené Supabase (SUPABASE_URL + SERVICE_ROLE_KEY), nabídky žijí
+ * v tabulce `quotes` — odkaz pak přežije restart serveru i víc instancí, takže
+ * zákazník nikdy neuvidí 404. To je ostrý provoz.
  *
- * Pro demo je to v pořádku a je to schválně to nejjednodušší, co funguje.
+ * Když Supabase nastavené není, padá se na paměť procesu (níže). To je demo
+ * režim: funguje na jednom běžícím serveru, po restartu se nabídky ztratí.
+ * Přepnutí je čistě otázka vyplnění klíčů — kód se nemění.
  */
 
 export type SharedQuote = {
@@ -37,29 +41,46 @@ export type SharedQuote = {
 };
 
 /**
- * Přes globalThis, ne prosté `new Map()`.
+ * Fallback úložiště v paměti procesu (demo režim, když není Supabase).
  *
- * Next.js zabalí API endpoint a stránku do oddělených balíčků, takže by každý
- * dostal vlastní instanci modulu a vlastní prázdnou Map. Endpoint by nabídku
- * uložil a stránka by ji nenašla — ověřeno, dělalo to 404 na čerstvě vytvořený
- * odkaz. globalThis je jediné, co obě strany sdílejí.
- *
- * Nezachraňuje to ale hlavní problém: na Vercelu běží víc instancí a každá má
- * svůj vlastní globalThis. Zákazník klikne na odkaz, trefí jinou instanci a
- * uvidí 404. Pro demo na jednom serveru to stačí, do provozu to MUSÍ do
- * databáze.
+ * Přes globalThis, ne prosté `new Map()`: Next.js zabalí API endpoint a stránku
+ * do oddělených balíčků, takže by každý dostal vlastní prázdnou Map a odkaz by
+ * hodil 404. globalThis je jediné, co obě strany sdílejí. S nastaveným Supabase
+ * je pravda v DB a tahle Map se ani nedotkne.
  */
 const g = globalThis as typeof globalThis & { __quotes?: Map<string, SharedQuote> };
-const quotes: Map<string, SharedQuote> = (g.__quotes ??= new Map());
+const mem: Map<string, SharedQuote> = (g.__quotes ??= new Map());
 
 /** Krátké ID — jde nadiktovat do telefonu, když odkaz nedorazí. */
 function newId(): string {
   return randomBytes(4).toString("hex");
 }
 
-export function saveQuote(
+/** DB řádek → SharedQuote. snake_case sloupce ↔ camelCase v appce. */
+function rowToQuote(r: Record<string, unknown>): SharedQuote {
+  return {
+    id: r.id as string,
+    createdAt: r.created_at as string,
+    company: r.company as SharedQuote["company"],
+    customer: r.customer as SharedQuote["customer"],
+    summary: (r.summary as string) ?? "",
+    tierName: (r.tier_name as string) ?? "",
+    productName: (r.product_name as string) ?? "",
+    earliestTerm: (r.earliest_term as string) ?? "",
+    items: (r.items as PricedItem[]) ?? [],
+    totals: r.totals as SharedQuote["totals"],
+    range: r.range as SharedQuote["range"],
+    assumptions: (r.assumptions as string[]) ?? [],
+    imageDataUrl: (r.image_url as string) ?? null,
+    videoId: (r.video_id as string) ?? null,
+    openedAt: (r.opened_at as string) ?? null,
+    interestedAt: (r.interested_at as string) ?? null,
+  };
+}
+
+export async function saveQuote(
   q: Omit<SharedQuote, "id" | "createdAt" | "openedAt" | "interestedAt">,
-): SharedQuote {
+): Promise<SharedQuote> {
   const saved: SharedQuote = {
     ...q,
     id: newId(),
@@ -67,12 +88,41 @@ export function saveQuote(
     openedAt: null,
     interestedAt: null,
   };
-  quotes.set(saved.id, saved);
+
+  const db = getSupabase();
+  if (db) {
+    const { error } = await db.from("quotes").insert({
+      id: saved.id,
+      created_at: saved.createdAt,
+      company: saved.company,
+      customer: saved.customer,
+      summary: saved.summary,
+      tier_name: saved.tierName,
+      product_name: saved.productName,
+      earliest_term: saved.earliestTerm,
+      items: saved.items,
+      totals: saved.totals,
+      range: saved.range,
+      assumptions: saved.assumptions,
+      image_url: saved.imageDataUrl,
+      video_id: saved.videoId,
+    });
+    if (error) throw new Error(`Uloženie ponuky zlyhalo: ${error.message}`);
+    return saved;
+  }
+
+  mem.set(saved.id, saved);
   return saved;
 }
 
-export function getQuote(id: string): SharedQuote | undefined {
-  return quotes.get(id);
+export async function getQuote(id: string): Promise<SharedQuote | undefined> {
+  const db = getSupabase();
+  if (db) {
+    const { data, error } = await db.from("quotes").select("*").eq("id", id).maybeSingle();
+    if (error) throw new Error(`Načítanie ponuky zlyhalo: ${error.message}`);
+    return data ? rowToQuote(data) : undefined;
+  }
+  return mem.get(id);
 }
 
 /**
@@ -82,8 +132,20 @@ export function getQuote(id: string): SharedQuote | undefined {
  * uvidí, že se zákazník na nabídku dívá, a může zvednout telefon ve chvíli,
  * kdy o tom zákazník přemýšlí. Konkurence pošle PDF do mailu a čeká.
  */
-export function markOpened(id: string): boolean {
-  const q = quotes.get(id);
+export async function markOpened(id: string): Promise<boolean> {
+  const db = getSupabase();
+  if (db) {
+    // Jen když ještě není otevřená (opened_at is null) → true právě jednou.
+    const { data, error } = await db
+      .from("quotes")
+      .update({ opened_at: new Date().toISOString() })
+      .eq("id", id)
+      .is("opened_at", null)
+      .select("id");
+    if (error) throw new Error(`Označenie otvorenia zlyhalo: ${error.message}`);
+    return (data?.length ?? 0) > 0;
+  }
+  const q = mem.get(id);
   if (!q || q.openedAt) return false;
   q.openedAt = new Date().toISOString();
   return true;
@@ -96,12 +158,24 @@ export function markOpened(id: string): boolean {
  * okamžitě a zvednout telefon, dokud je zákazník rozhodnutý. Otevření znamená
  * "dívá se", tohle znamená "chce to".
  */
-export function markInterested(id: string): boolean {
-  const q = quotes.get(id);
+export async function markInterested(id: string): Promise<boolean> {
+  const now = new Date().toISOString();
+  const db = getSupabase();
+  if (db) {
+    // Zájem zároveň zaručí, že je nabídka označená jako otevřená.
+    const { data, error } = await db
+      .from("quotes")
+      .update({ interested_at: now, opened_at: now })
+      .eq("id", id)
+      .is("interested_at", null)
+      .select("id");
+    if (error) throw new Error(`Označenie záujmu zlyhalo: ${error.message}`);
+    return (data?.length ?? 0) > 0;
+  }
+  const q = mem.get(id);
   if (!q) return false;
-  // I když už byla otevřená, zájem je nová a silnější událost.
-  if (!q.openedAt) q.openedAt = new Date().toISOString();
+  if (!q.openedAt) q.openedAt = now;
   if (q.interestedAt) return false;
-  q.interestedAt = new Date().toISOString();
+  q.interestedAt = now;
   return true;
 }

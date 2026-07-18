@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const q = getQuote(id);
+  const q = await getQuote(id);
   if (!q) return NextResponse.json({ error: "Ponuka neexistuje." }, { status: 404 });
 
   return NextResponse.json(

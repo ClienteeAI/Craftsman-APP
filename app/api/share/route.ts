@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ponuka je prázdna." }, { status: 400 });
     }
 
-    const saved = saveQuote({
+    const saved = await saveQuote({
       company: body.company,
       customer: body.customer ?? { name: null, obec: null, phone: null, email: null },
       summary: String(body.summary ?? ""),

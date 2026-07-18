@@ -45,7 +45,7 @@ export default function Login() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      router.push("/");
+      router.push("/prehlad");
       router.refresh();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Nepodarilo sa.";

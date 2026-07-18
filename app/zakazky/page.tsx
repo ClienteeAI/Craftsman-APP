@@ -49,13 +49,27 @@ export default function Zakazky() {
               {live} {live === 1 ? "aktívna" : live >= 2 && live <= 4 ? "aktívne" : "aktívnych"}
             </p>
           </div>
-          <Link
-            href="/profil"
-            aria-label="Moja firma"
-            className="-mr-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-neutral-400 active:bg-neutral-100"
-          >
-            <GearIcon />
-          </Link>
+          <div className="flex shrink-0 items-center gap-1">
+            <Link
+              href="/prehlad"
+              aria-label="Prehľad"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+              </svg>
+            </Link>
+            <Link
+              href="/profil"
+              aria-label="Moja firma"
+              className="-mr-2 flex h-11 w-11 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
+            >
+              <GearIcon />
+            </Link>
+          </div>
         </div>
 
         {/* Upozornění do kapsy — zmizí, jakmile si je řemeslník zapne. */}

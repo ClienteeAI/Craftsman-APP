@@ -296,6 +296,13 @@ export default function QuoteFlow({ company }: { company: string }) {
           </div>
           <nav className="flex shrink-0 items-center gap-1">
             <Link
+              href="/prehlad"
+              aria-label="Prehľad"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
+            >
+              <GridIcon />
+            </Link>
+            <Link
               href="/zakazky"
               aria-label="Zákazky"
               className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
@@ -1413,6 +1420,17 @@ function ListIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function GridIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
     </svg>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { dueReminders, listJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
 import { winStats, type WinStats } from "@/lib/crm/stats";
 import PushToggle from "../push-toggle";
+import FollowUpStrip from "../followup-strip";
 
 /**
  * Modul 1 — seznam zakázek. Domovská obrazovka CRM.
@@ -19,20 +20,21 @@ export default function Zakazky() {
   const [stats, setStats] = useState<WinStats | null>(null);
   const [filter, setFilter] = useState<JobStatus | "vsetky">("vsetky");
 
+  // Sdílený refresh — volá ho i follow-up po odložení připomínky.
+  const refresh = useCallback(() => {
+    const j = listJobs();
+    setJobs(j);
+    setDue(dueReminders());
+    setStats(winStats(j));
+  }, []);
+
   useEffect(() => {
-    // Nejdřív ukážeme lokální (okamžité), pak zkusíme obnovu z cloudu, když je
-    // zařízení prázdné (nový/vyměněný telefon) — a znovu vykreslíme.
-    function refresh() {
-      const j = listJobs();
-      setJobs(j);
-      setDue(dueReminders());
-      setStats(winStats(j));
-    }
+    // Nejdřív lokální (okamžité), pak obnova z cloudu na prázdném zařízení.
     refresh();
     void restoreIfEmpty().then((restored) => {
       if (restored.length > 0) refresh();
     });
-  }, []);
+  }, [refresh]);
 
   const shown = filter === "vsetky" ? jobs : jobs.filter((j) => j.status === filter);
   const live = jobs.filter((j) => j.status !== "hotovo" && j.status !== "straceny").length;
@@ -88,6 +90,9 @@ export default function Zakazky() {
             </div>
           </section>
         )}
+
+        {/* Postrč nabídku — automatický follow-up. Ukáže se jen když je co. */}
+        {filter === "vsetky" && <FollowUpStrip jobs={jobs} onChange={refresh} />}
 
         {/* Filtr stavů — vodorovný scroll, ať se vejde na úzký displej. */}
         <div className="mt-5 -mx-5 flex gap-2 overflow-x-auto px-5 pb-1">

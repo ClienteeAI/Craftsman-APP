@@ -52,9 +52,21 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - 🟡 Podpis a záloha v odkazu — podpis prstem HOTOVO; reálná platba zálohy (Stripe) zvlášť
 - ⬜ Krajský benchmark ⭐ („u vás se to dělá za 5–7k, ty dáváš 4,2") — moat
 - ⬜ „V téhle ulici jsme dělali tři střechy" (s fotkami, automaticky)
-- ⬜ Zakázkový list v ukrajinštině (nabídka SK, příkaz partě jejich jazykem)
 - ⬜ Plocha z jedné fotky (dveře = měřítko → „máte 140 m²")
 - ⬜ Adresa → katastr → plocha (ZBGIS SK / ČÚZK CZ, zdarma)
+
+## E. Infrastruktura / provoz (nebylo na původním seznamu)
+
+- ✅ Multi-user: přihlášení emailem, RLS izolace (tisíce řemeslníků, jedna firma)
+- ✅ Databáze Supabase (nabídky, CRM, profil), média ve Storage, retry
+- ✅ Push notifikace (i se zavřenou appkou)
+- ✅ Ochrana AI endpointů přihlášením (proti utracení kreditu)
+- ✅ Odhoditelný backend (migrace v gitu, env klíče)
+- ✅ Testovací režim MOCK_RENDER (testování zdarma, bez Gemini)
+- ✅ Editovatelný kontakt na zakázce + termín realizace
+- ⬜ Nasazení na Vercel (veřejná URL — nutná pro reálné posílání, push, PWA)
+- ⬜ Přihlášení přes SMS / firemní admin (správa 10k účtů) — až bude potřeba
+- ⬜ Reálná platba zálohy (Stripe/GoPay)
 
 ## C. AI, která se učí
 

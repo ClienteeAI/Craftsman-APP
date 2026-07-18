@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { deleteJob, getJob, STATUS, updateJob, type Job, type JobStatus } from "@/lib/crm/jobs";
 import MarketingSection from "./marketing-section";
+import JobOffer from "./job-offer";
 
 /**
  * Karta zákazníka — detail zakázky.
@@ -109,17 +110,24 @@ export default function ZakazkaDetail() {
                 Navigovať
               </a>
             )}
-            {job.shareUrl && (
-              <a
-                href={job.shareUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl border border-neutral-300 px-4 py-2.5 text-sm font-medium active:bg-neutral-100"
-              >
-                Ponuka
-              </a>
-            )}
           </div>
+        </section>
+
+        {/* Odoslaná ponuka — cena, odkaz na to, co vidí zákazník, a živý stav. */}
+        {job.shareUrl && <JobOffer shareUrl={job.shareUrl} priceExVat={job.priceExVat} />}
+
+        {/* Termín realizace — kdy začneme pracovat (jiné než připomenutí zavolat). */}
+        <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">
+            Termín realizácie
+          </h2>
+          <p className="-mt-1 mb-2 text-xs text-neutral-400">Kedy na zákazke začneme pracovať.</p>
+          <input
+            type="date"
+            value={job.startAt ? job.startAt.slice(0, 10) : ""}
+            onChange={(e) => patch({ startAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
+            className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+          />
         </section>
 
         {/* Připomenutí. */}

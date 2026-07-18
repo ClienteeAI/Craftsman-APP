@@ -219,6 +219,11 @@ function JobCard({ job }: { job: Job }) {
           ⏰ Pripomienka: {new Date(job.remindAt!).toLocaleDateString("sk-SK")}
         </p>
       )}
+      {job.startAt && (
+        <p className="mt-1 text-xs font-medium text-neutral-600">
+          🔨 Realizácia: {new Date(job.startAt).toLocaleDateString("sk-SK")}
+        </p>
+      )}
     </Link>
   );
 }

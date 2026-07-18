@@ -30,6 +30,7 @@ function rowToJob(r: Record<string, unknown>): Job {
     shareUrl: (r.share_url as string) ?? null,
     note: (r.note as string) ?? null,
     remindAt: (r.remind_at as string) ?? null,
+    startAt: (r.start_at as string) ?? null,
   };
 }
 
@@ -55,6 +56,7 @@ export async function upsertJobServer(job: Job, userId: string): Promise<void> {
     share_url: job.shareUrl,
     note: job.note,
     remind_at: job.remindAt,
+    start_at: job.startAt,
   });
   if (error) throw new Error(`Záloha zákazky zlyhala: ${error.message}`);
 }

@@ -39,6 +39,8 @@ export type Job = {
   note: string | null;
   /** Připomenutí — kdy zákazníkovi zavolat. ISO datum. */
   remindAt: string | null;
+  /** Termín realizace — kdy se má začít pracovat. ISO datum. */
+  startAt: string | null;
 };
 
 const KEY = "zakazky-v1";
@@ -131,7 +133,7 @@ function shortId(): string {
  * kontakty v seznamu.
  */
 export function upsertJob(
-  input: Omit<Job, "id" | "createdAt" | "updatedAt" | "status" | "note" | "remindAt"> &
+  input: Omit<Job, "id" | "createdAt" | "updatedAt" | "status" | "note" | "remindAt" | "startAt"> &
     Partial<Pick<Job, "status" | "id">>,
 ): Job {
   const jobs = read();
@@ -162,6 +164,7 @@ export function upsertJob(
     status: input.status ?? "ponuka",
     note: null,
     remindAt: null,
+    startAt: null,
     ...input,
   };
   write([job, ...jobs]);
@@ -195,6 +198,7 @@ export function createJob(input: {
     shareUrl: null,
     note: input.note ?? null,
     remindAt: null,
+    startAt: null,
   };
   write([job, ...read()]);
   backup(job);

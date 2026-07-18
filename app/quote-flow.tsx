@@ -15,6 +15,7 @@ import { deleteTemplate, listTemplates, saveTemplate, type Template } from "@/li
 import RoofPhoto from "./roof-photo";
 import VideoMessage from "./video-message";
 import ShoppingList from "./shopping-list";
+import WorkOrder from "./work-order";
 
 type Result = Extraction & { tiers: TieredQuote[]; product: RoofProduct | null };
 type Phase = "idle" | "recording" | "transcribing" | "thinking" | "done" | "error";
@@ -474,6 +475,16 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
 
             {/* Nákupní seznam do velkoobchodu — z materiálu nabídky. */}
             {live && <ShoppingList items={live.items} companyName={company} />}
+
+            {/* Zákazkový list pro partu v jejím jazyce. */}
+            {live && active && (
+              <WorkOrder
+                items={live.items}
+                obec={customer.obec ?? result.job.customer.obec}
+                summary={result.summary}
+                warnings={active.quote.assumptions}
+              />
+            )}
 
             <VideoMessage
               onReady={(id) => {

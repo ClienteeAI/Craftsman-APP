@@ -47,8 +47,9 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - ✅ Automatický follow-up ⭐ („postrč nabídku" — otevřel a mlčí / neotevřel)
 - ✅ Nemá marketing a nikdy mít nebude ⭐ (auto FB příspěvek / recenze / portfolio)
 - ✅ Šablony („dělám pořád to samé") — uloží text, načte na ťuknutí
+- ✅ Nákupní seznam jedním klikem do velkoobchodu
+- ✅ Zákazkový list v ukrajinštině (i PL/RO/HU) — příkaz partě v jejich jazyce
 - ⬜ Podpis a záloha rovnou v odkazu (cyklus z týdnů na hodinu)
-- ⬜ Nákupní seznam jedním klikem do velkoobchodu
 - ⬜ Krajský benchmark ⭐ („u vás se to dělá za 5–7k, ty dáváš 4,2") — moat
 - ⬜ „V téhle ulici jsme dělali tři střechy" (s fotkami, automaticky)
 - ⬜ Zakázkový list v ukrajinštině (nabídka SK, příkaz partě jejich jazykem)

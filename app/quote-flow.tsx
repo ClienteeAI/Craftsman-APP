@@ -14,6 +14,7 @@ import { recomputeTotals, repriceItem } from "@/lib/quote/totals";
 import { deleteTemplate, listTemplates, saveTemplate, type Template } from "@/lib/quote/templates";
 import RoofPhoto from "./roof-photo";
 import VideoMessage from "./video-message";
+import ShoppingList from "./shopping-list";
 
 type Result = Extraction & { tiers: TieredQuote[]; product: RoofProduct | null };
 type Phase = "idle" | "recording" | "transcribing" | "thinking" | "done" | "error";
@@ -470,6 +471,9 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
             {/* Kontrola těsně před odesláním — přesně tam, kde na ni majster
                 narazí, když chce poslat. */}
             {result && live && <QuoteCheck findings={checkQuote(result.job, live.items)} />}
+
+            {/* Nákupní seznam do velkoobchodu — z materiálu nabídky. */}
+            {live && <ShoppingList items={live.items} companyName={company} />}
 
             <VideoMessage
               onReady={(id) => {

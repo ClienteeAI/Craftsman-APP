@@ -15,23 +15,62 @@ import DetailsForm from "./details-form";
  * Tady majster zakázku vede: přepne stav, když pošle nabídku nebo domluví
  * realizaci, a nastaví si, kdy zavolat.
  */
+type Nudge = { title: string; body: string; actionLabel: string; actionHref: string };
+
+const daysAgo = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+
+/**
+ * Chytrá výzva k akci. Přečte stav zakázky (nabídka poslaná? otevřel? zájem?)
+ * a navrhne další krok, který majstrovi pomůže zakázku získat. Vrací null, když
+ * není co řešit (aby popup neotravoval, když všechno běží).
+ */
+async function computeNudge(j: Job): Promise<Nudge | null> {
+  const tel = j.customer.phone ? `tel:${j.customer.phone}` : `/?zakazka=${j.id}`;
+  if (!j.shareUrl) {
+    return {
+      title: "Naceňte túto zákazku",
+      body: "Ešte nemá ponuku. Naceňte ju a pošlite zákazníkovi, kým je v nálade — rýchla ponuka znamená viac zákaziek.",
+      actionLabel: "Vytvoriť ponuku",
+      actionHref: `/?zakazka=${j.id}`,
+    };
+  }
+  const sid = j.shareUrl.split("/p/")[1];
+  if (!sid) return null;
+  try {
+    const res = await fetch(`/api/share/${sid}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const s = await res.json();
+    if (s.signedAt)
+      return { title: "Zákazník podpísal! 🎉", body: "Ozvite sa a dohodnite termín realizácie.", actionLabel: "Zavolať", actionHref: tel };
+    if (s.interestedAt || s.chosenTier)
+      return { title: "Zákazník má záujem! 🔥", body: "Zavolajte mu teraz, kým je rozhodnutý — toto je tá chvíľa.", actionLabel: "Zavolať", actionHref: tel };
+    if (s.openedAt && daysAgo(s.openedAt) >= 1)
+      return { title: "Pozrel ponuku, ale neozval sa", body: `Pozrel ju pred ${daysAgo(s.openedAt)} dňami. Jeden telefonát to rozhýbe.`, actionLabel: "Zavolať", actionHref: tel };
+    if (!s.openedAt && s.createdAt && daysAgo(s.createdAt) >= 2)
+      return { title: "Ponuka ešte neotvorená", body: `Poslali ste pred ${daysAgo(s.createdAt)} dňami a zákazník ju ešte neotvoril. Skúste sa ozvať alebo poslať znova.`, actionLabel: "Zavolať", actionHref: tel };
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default function ZakazkaDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [job, setJob] = useState<Job | null>(null);
   const [notFound, setNotFound] = useState(false);
-  // Popup s poznámkou (připomínkou) při vstupu — ať majster hned vidí, na co
-  // si má u tohoto zákazníka dát pozor, než se do zakázky ponoří.
-  const [showReminder, setShowReminder] = useState(false);
+  // Chytrá výzva k akci při vstupu — přečte stav zakázky a navrhne další krok,
+  // co pomůže získat zakázku (naceniť / ozvať sa / zavolať).
+  const [nudge, setNudge] = useState<Nudge | null>(null);
 
   useEffect(() => {
     const j = getJob(id);
-    if (j) {
-      setJob(j);
-      if (j.note && j.note.trim()) setShowReminder(true);
-    } else {
+    if (!j) {
       setNotFound(true);
+      return;
     }
+    setJob(j);
+    void computeNudge(j).then(setNudge);
   }, [id]);
 
   if (notFound) {
@@ -61,34 +100,38 @@ export default function ZakazkaDetail() {
 
   return (
     <main className="min-h-screen text-neutral-900">
-      {/* Popup s poznámkou při vstupu do zakázky. */}
-      {showReminder && job.note && (
+      {/* Chytrá výzva k akci při vstupu — pomáhá získat zakázku. */}
+      {nudge && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5 backdrop-blur-sm"
-          onClick={() => setShowReminder(false)}
+          onClick={() => setNudge(null)}
         >
           <div
             className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lift"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-2">
-              <span className="text-xl">📌</span>
-              <h2 className="text-lg font-semibold">Pripomienka k zákazníkovi</h2>
-            </div>
-            <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-neutral-700">
-              {job.note}
-            </p>
-            {job.remindAt && (
-              <p className="mt-2 text-xs text-neutral-400">
-                Termín: {new Date(job.remindAt).toLocaleDateString("sk-SK")}
+            <h2 className="text-lg font-semibold">{nudge.title}</h2>
+            <p className="mt-2 text-[15px] leading-relaxed text-neutral-600">{nudge.body}</p>
+            {job.note && job.note.trim() && (
+              <p className="mt-3 rounded-lg bg-neutral-50 px-3 py-2 text-sm text-neutral-500">
+                📌 {job.note}
               </p>
             )}
-            <button
-              onClick={() => setShowReminder(false)}
-              className="mt-5 w-full rounded-xl bg-brand-600 py-3 text-base font-medium text-white shadow-soft transition hover:bg-brand-700"
-            >
-              Rozumiem
-            </button>
+            <div className="mt-5 flex gap-2">
+              <a
+                href={nudge.actionHref}
+                onClick={() => setNudge(null)}
+                className="flex-1 rounded-xl bg-brand-600 py-3 text-center text-base font-medium text-white shadow-soft transition hover:bg-brand-700"
+              >
+                {nudge.actionLabel}
+              </a>
+              <button
+                onClick={() => setNudge(null)}
+                className="rounded-xl border border-neutral-300 px-5 py-3 text-base font-medium text-neutral-500 transition hover:bg-neutral-50"
+              >
+                Neskôr
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -157,6 +200,9 @@ export default function ZakazkaDetail() {
 
             {/* Odoslaná ponuka — jen když existuje. */}
             {job.shareUrl && <JobOffer shareUrl={job.shareUrl} priceExVat={job.priceExVat} />}
+
+            {/* Parametry zakázky — v levém sloupci, ať vyplní prostor pod kontaktem. */}
+            <DetailsForm details={job.details} onChange={(details) => patch({ details })} />
           </div>
 
           {/* Pravý sidebar */}
@@ -197,9 +243,6 @@ export default function ZakazkaDetail() {
             </section>
           </div>
         </div>
-
-        {/* Parametry zakázky — kartičky přes celou šířku (masonry). */}
-        <DetailsForm details={job.details} onChange={(details) => patch({ details })} />
 
         {/* Auto-marketing */}
         <div className="mt-5">

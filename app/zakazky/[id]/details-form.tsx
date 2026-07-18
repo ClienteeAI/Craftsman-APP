@@ -38,8 +38,9 @@ export default function DetailsForm({
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
         Parametre zákazky
       </h2>
-      {/* Masonry — kartičky vedle sebe, ať se využije šířka a míň scrolluje. */}
-      <div className="columns-1 gap-4 md:columns-2 xl:columns-3 [&>section]:mb-4 [&>section]:break-inside-avoid">
+      {/* Grid — kartičky vedle sebe; otevřená se roztiahne na celú šírku (rozbalí
+          sa NA MIESTE, nepreskočí ako pri columns). */}
+      <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
         {SECTIONS.map((s) => {
           const isOpen = open === s.title;
           const filled = s.fields.filter((f) => {
@@ -57,7 +58,9 @@ export default function DetailsForm({
           return (
             <section
               key={s.title}
-              className="group overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft transition hover:border-brand-300"
+              className={`group overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft transition hover:border-brand-300 ${
+                isOpen ? "sm:col-span-2" : ""
+              }`}
             >
             <button
               onClick={() => setOpen(isOpen ? null : s.title)}

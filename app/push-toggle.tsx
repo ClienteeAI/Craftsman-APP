@@ -56,7 +56,7 @@ export default function PushToggle() {
   }
 
   return (
-    <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border-2 border-neutral-900 bg-neutral-900 px-4 py-3 text-white">
+    <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border-2 border-brand-600 bg-brand-600 px-4 py-3 text-white">
       <div className="min-w-0">
         <p className="text-sm font-medium">Zapni si upozornenia</p>
         <p className="text-xs text-neutral-300">

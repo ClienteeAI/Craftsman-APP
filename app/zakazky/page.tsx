@@ -121,7 +121,7 @@ export default function Zakazky() {
                 </Link>
                 <Link
                   href="/"
-                  className="inline-block rounded-xl bg-neutral-900 px-5 py-3 text-base font-medium text-white"
+                  className="inline-block rounded-xl bg-brand-600 px-5 py-3 text-base font-medium text-white shadow-soft transition hover:bg-brand-700"
                 >
                   Vytvoriť ponuku
                 </Link>
@@ -148,7 +148,7 @@ export default function Zakazky() {
           </Link>
           <Link
             href="/"
-            className="flex-1 rounded-xl bg-neutral-900 py-3.5 text-center text-base font-medium text-white active:opacity-80"
+            className="flex-1 rounded-xl bg-brand-600 py-3.5 text-center text-base font-medium text-white shadow-soft transition hover:bg-brand-700 active:opacity-90"
           >
             + Nová ponuka
           </Link>
@@ -168,7 +168,7 @@ function JobCard({ job }: { job: Job }) {
   return (
     <Link
       href={`/zakazky/${job.id}`}
-      className="block rounded-2xl border border-neutral-200 bg-white p-4 active:bg-neutral-50"
+      className="block rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-4 active:bg-neutral-50"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -264,7 +264,7 @@ function StatsStrip({ s }: { s: WinStats }) {
   const enough = s.closed >= 5;
 
   return (
-    <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
+    <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
       <div className="flex items-baseline justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Tvoja úspešnosť</h2>
         <span className="text-sm text-neutral-400">{s.closed} uzavretých</span>

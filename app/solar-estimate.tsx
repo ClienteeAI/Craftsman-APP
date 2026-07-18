@@ -87,7 +87,7 @@ export default function SolarEstimate({
                 onClick={() => setAspect(val)}
                 className={`rounded-full px-3.5 py-2 text-sm font-medium ${
                   aspect === val
-                    ? "bg-neutral-900 text-white"
+                    ? "bg-brand-600 text-white"
                     : "border border-neutral-200 bg-white text-neutral-600"
                 }`}
               >
@@ -99,7 +99,7 @@ export default function SolarEstimate({
           <button
             onClick={calc}
             disabled={busy}
-            className="mt-3 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white active:opacity-80 disabled:opacity-40"
+            className="mt-3 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white active:opacity-80 disabled:opacity-40"
           >
             {busy ? "Počítam…" : "Spočítať výrobu"}
           </button>

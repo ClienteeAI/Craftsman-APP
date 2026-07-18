@@ -90,7 +90,7 @@ export default function OfferVisual({
               }}
               className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium ${
                 activeKey === o.key
-                  ? "bg-neutral-900 text-white"
+                  ? "bg-brand-600 text-white"
                   : "border border-neutral-200 bg-white text-neutral-600"
               }`}
             >

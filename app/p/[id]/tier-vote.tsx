@@ -53,7 +53,7 @@ export default function TierVote({
               key={t.id}
               onClick={() => choose(t.id)}
               className={`block w-full rounded-2xl border-2 p-5 text-left transition ${
-                active ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-200 bg-white"
+                active ? "border-brand-600 bg-brand-600 text-white" : "border-neutral-200 bg-white"
               }`}
             >
               <div className="flex items-baseline justify-between gap-3">

@@ -95,7 +95,7 @@ export default function WorkOrder({
                 onClick={() => setLang(code)}
                 className={`rounded-full px-3.5 py-2 text-sm font-medium ${
                   lang === code
-                    ? "bg-neutral-900 text-white"
+                    ? "bg-brand-600 text-white"
                     : "border border-neutral-200 bg-white text-neutral-600"
                 }`}
               >
@@ -107,7 +107,7 @@ export default function WorkOrder({
           <button
             onClick={generate}
             disabled={busy}
-            className="mt-3 rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white active:opacity-80 disabled:opacity-40"
+            className="mt-3 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white active:opacity-80 disabled:opacity-40"
           >
             {busy ? "Píšem…" : text ? "Vytvoriť znova" : "Vytvoriť príkaz"}
           </button>
@@ -120,7 +120,7 @@ export default function WorkOrder({
               <div className="mt-3 flex gap-2">
                 <button
                   onClick={copy}
-                  className="flex-1 rounded-xl bg-neutral-900 py-2.5 text-center text-sm font-medium text-white active:opacity-80"
+                  className="flex-1 rounded-xl bg-brand-600 py-2.5 text-center text-sm font-medium text-white active:opacity-80"
                 >
                   {copied ? "Skopírované ✓" : "Kopírovať"}
                 </button>

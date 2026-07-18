@@ -43,7 +43,7 @@ export default function MarketingSection({ job }: { job: Job }) {
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
+    <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
       <h2 className="mb-1 text-xs font-semibold uppercase tracking-widest text-neutral-400">
         Marketing zo zákazky
       </h2>
@@ -55,7 +55,7 @@ export default function MarketingSection({ job }: { job: Job }) {
         <button
           onClick={generate}
           disabled={busy}
-          className="rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white active:opacity-80 disabled:opacity-40"
+          className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white active:opacity-80 disabled:opacity-40"
         >
           {busy ? "Píšem…" : "✨ Vytvoriť marketing"}
         </button>

@@ -302,7 +302,7 @@ export default function RoofPhoto({
             <button
               onClick={render}
               disabled={!hasMask || phase === "rendering"}
-              className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-30"
+              className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-soft transition hover:bg-brand-700 disabled:opacity-30"
             >
               {phase === "rendering" ? "Kreslím strechu…" : "Ukázať novú strechu"}
             </button>
@@ -340,7 +340,7 @@ export default function RoofPhoto({
                   disabled={varying !== null}
                   className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium disabled:opacity-50 ${
                     activeVariant === key
-                      ? "bg-neutral-900 text-white"
+                      ? "bg-brand-600 text-white"
                       : "border border-neutral-200 bg-white text-neutral-600"
                   }`}
                 >
@@ -442,7 +442,7 @@ function FindingsPanel({ findings, loading }: { findings: RoofFinding[] | null; 
             <span
               className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${
                 f.confidence === "high"
-                  ? "bg-neutral-900 text-white"
+                  ? "bg-brand-600 text-white"
                   : "bg-amber-100 text-amber-800"
               }`}
             >

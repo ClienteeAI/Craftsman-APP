@@ -69,7 +69,7 @@ export default function ShoppingList({
           <div className="mt-4 flex gap-2">
             <button
               onClick={copy}
-              className="flex-1 rounded-xl bg-neutral-900 py-3 text-center text-sm font-medium text-white active:opacity-80"
+              className="flex-1 rounded-xl bg-brand-600 py-3 text-center text-sm font-medium text-white active:opacity-80"
             >
               {copied ? "Skopírované ✓" : "Kopírovať zoznam"}
             </button>

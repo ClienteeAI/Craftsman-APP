@@ -74,7 +74,7 @@ export default function Pwa() {
               await prompt.userChoice;
               setPrompt(null);
             }}
-            className="ml-auto shrink-0 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+            className="ml-auto shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white"
           >
             Pridať
           </button>

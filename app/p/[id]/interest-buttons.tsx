@@ -48,7 +48,7 @@ export default function InterestButtons({
         <a
           href={`tel:${phone}`}
           onClick={tellInterested}
-          className="flex-1 rounded-xl bg-neutral-900 py-3.5 text-center text-base font-medium text-white active:opacity-80"
+          className="flex-1 rounded-xl bg-brand-600 py-3.5 text-center text-base font-medium text-white active:opacity-80"
         >
           Mám záujem — zavolať
         </a>

@@ -53,7 +53,7 @@ export default function Profil() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-neutral-900">
+    <main className="min-h-screen text-neutral-900">
       <div className="mx-auto max-w-2xl px-5 py-8 pb-32">
         <Link href="/" className="text-sm text-neutral-500 underline underline-offset-4">
           ← Späť na ponuku
@@ -118,7 +118,7 @@ export default function Profil() {
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <button
             onClick={save}
-            className="flex-1 rounded-xl bg-neutral-900 py-3.5 text-base font-medium text-white active:opacity-80"
+            className="flex-1 rounded-xl bg-brand-600 py-3.5 text-base font-medium text-white active:opacity-80"
           >
             Uložiť
           </button>
@@ -156,7 +156,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+        className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
       />
     </label>
   );
@@ -186,7 +186,7 @@ function Num({
             if (Number.isFinite(n)) onChange(n);
             else if (e.target.value === "") onChange(0);
           }}
-          className="w-24 rounded-lg border border-neutral-200 px-3 py-2.5 text-right text-base tabular-nums outline-none focus:border-neutral-900"
+          className="w-24 rounded-lg border border-neutral-200 px-3 py-2.5 text-right text-base tabular-nums outline-none focus:border-brand-500"
         />
         <span className="w-10 text-sm text-neutral-400">{unit}</span>
       </span>

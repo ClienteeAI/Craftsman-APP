@@ -52,7 +52,7 @@ export default function NovyKontakt() {
           Zapíš si zákazníka do zoznamu. Ponuku môžeš dorobiť neskôr.
         </p>
 
-        <section className="mt-6 space-y-4 rounded-2xl border border-neutral-200 bg-white p-5">
+        <section className="mt-6 space-y-4 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
           <Field label="Meno">
             <input
               value={name}
@@ -60,7 +60,7 @@ export default function NovyKontakt() {
               autoFocus
               autoComplete="name"
               placeholder="Ján Novák"
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+              className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
             />
           </Field>
           <Field label="Obec">
@@ -68,7 +68,7 @@ export default function NovyKontakt() {
               value={obec}
               onChange={(e) => setObec(e.target.value)}
               placeholder="Trnava"
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+              className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
             />
           </Field>
           <Field label="Telefón">
@@ -79,7 +79,7 @@ export default function NovyKontakt() {
               inputMode="tel"
               autoComplete="tel"
               placeholder="0901 234 567"
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+              className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
             />
           </Field>
           <Field label="E-mail">
@@ -91,7 +91,7 @@ export default function NovyKontakt() {
               autoComplete="email"
               autoCapitalize="none"
               placeholder="jan@email.sk"
-              className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+              className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
             />
           </Field>
           <Field label="Poznámka">
@@ -100,7 +100,7 @@ export default function NovyKontakt() {
               onChange={(e) => setNote(e.target.value)}
               rows={3}
               placeholder="Z čoho poptávka, čo chce, kedy volať…"
-              className="w-full resize-none rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+              className="w-full resize-none rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
             />
           </Field>
         </section>
@@ -117,7 +117,7 @@ export default function NovyKontakt() {
         <button
           onClick={save}
           disabled={!canSave}
-          className="mx-auto block w-full max-w-2xl rounded-xl bg-neutral-900 py-3.5 text-center text-base font-medium text-white active:opacity-80 disabled:opacity-30"
+          className="mx-auto block w-full max-w-2xl rounded-xl bg-brand-600 py-3.5 text-center text-base font-medium text-white active:opacity-80 disabled:opacity-30"
         >
           Uložiť kontakt
         </button>

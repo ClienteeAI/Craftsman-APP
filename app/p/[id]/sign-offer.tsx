@@ -96,7 +96,7 @@ export default function SignOffer({
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
+    <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
       {!open ? (
         <>
           <p className="text-[15px] font-medium">Chcete to záväzne objednať?</p>
@@ -105,7 +105,7 @@ export default function SignOffer({
           </p>
           <button
             onClick={() => setOpen(true)}
-            className="mt-3 rounded-xl bg-neutral-900 px-5 py-3 text-base font-medium text-white active:opacity-80"
+            className="mt-3 rounded-xl bg-brand-600 px-5 py-3 text-base font-medium text-white active:opacity-80"
           >
             Záväzne objednať
           </button>
@@ -129,7 +129,7 @@ export default function SignOffer({
             <button
               onClick={submit}
               disabled={!hasInk || busy}
-              className="flex-1 rounded-xl bg-neutral-900 py-3 text-base font-medium text-white active:opacity-80 disabled:opacity-40"
+              className="flex-1 rounded-xl bg-brand-600 py-3 text-base font-medium text-white active:opacity-80 disabled:opacity-40"
             >
               {busy ? "Odosielam…" : "Podpísať a objednať"}
             </button>

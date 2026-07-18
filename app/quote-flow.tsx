@@ -706,7 +706,7 @@ function TierPicker({
             key={t.id}
             onClick={() => onSelect(t.id)}
             className={`relative rounded-2xl border p-4 text-left transition ${
-              on ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-200 hover:border-neutral-400"
+              on ? "border-brand-600 bg-brand-600 text-white" : "border-neutral-200 hover:border-neutral-400"
             }`}
           >
             {t.recommended && (
@@ -1097,7 +1097,7 @@ function ShareBar({
       <button
         onClick={onShare}
         disabled={sharing}
-        className="w-full rounded-xl bg-neutral-900 py-4 text-base font-medium text-white disabled:opacity-40 active:opacity-80"
+        className="w-full rounded-xl bg-brand-600 py-4 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 disabled:opacity-40 disabled:shadow-none active:opacity-90"
       >
         {sharing ? "Pripravujem…" : "Poslať zákazníkovi"}
       </button>
@@ -1236,7 +1236,7 @@ function ShareBar({
         <span className="min-w-0 flex-1 truncate pl-2 text-sm text-neutral-500">{url}</span>
         <button
           onClick={copyLink}
-          className="shrink-0 rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white active:opacity-80"
+          className="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
         >
           {copied ? "Skopírované ✓" : "Kopírovať"}
         </button>
@@ -1374,7 +1374,7 @@ function FollowUps({
                     onClick={() => set(f.field, o)}
                     className={`rounded-lg border px-4 py-2 text-sm font-medium ${
                       answers[f.field] === o
-                        ? "border-neutral-900 bg-neutral-900 text-white"
+                        ? "border-brand-600 bg-brand-600 text-white"
                         : "border-neutral-300 active:bg-neutral-100"
                     }`}
                   >
@@ -1398,7 +1398,7 @@ function FollowUps({
       <button
         onClick={() => onSubmit(answers)}
         disabled={!allAnswered}
-        className="mt-5 w-full rounded-xl bg-neutral-900 py-3.5 text-base font-medium text-white disabled:opacity-30 active:opacity-80"
+        className="mt-5 w-full rounded-xl bg-brand-600 py-3.5 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 disabled:opacity-30 disabled:shadow-none active:opacity-90"
       >
         Doplniť a prepočítať
       </button>

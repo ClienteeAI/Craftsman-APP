@@ -66,7 +66,7 @@ export default function ZakazkaDetail() {
             odeslání se nabídka přilepí zpátky na tuhle kartu. */}
         <Link
           href={`/?zakazka=${job.id}`}
-          className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-neutral-900 py-3.5 text-base font-medium text-white active:opacity-80"
+          className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 active:opacity-90"
         >
           {job.shareUrl ? "Nová ponuka pre kontakt" : "Vytvoriť ponuku"}
         </Link>
@@ -93,7 +93,7 @@ export default function ZakazkaDetail() {
 
         {/* Kontakt — editovatelný. Doplníš meno, telefón, mail aj u zákazky,
             ktorá prišla bez nich (napr. z mailu bez podpisu). */}
-        <section className="mt-8 rounded-2xl border border-neutral-200 bg-white p-5">
+        <section className="mt-8 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
             Kontakt
           </h2>
@@ -129,7 +129,7 @@ export default function ZakazkaDetail() {
             {job.customer.phone && (
               <a
                 href={`tel:${job.customer.phone}`}
-                className="rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white active:opacity-80"
+                className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft transition hover:bg-brand-700"
               >
                 Zavolať
               </a>
@@ -161,7 +161,7 @@ export default function ZakazkaDetail() {
         )}
 
         {/* Termín realizace — kdy začneme pracovat (jiné než připomenutí zavolat). */}
-        <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
+        <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">
             Termín realizácie
           </h2>
@@ -170,12 +170,12 @@ export default function ZakazkaDetail() {
             type="date"
             value={job.startAt ? job.startAt.slice(0, 10) : ""}
             onChange={(e) => patch({ startAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
-            className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+            className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
           />
         </section>
 
         {/* Připomenutí. */}
-        <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
+        <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">
             Pripomenúť zavolať
           </h2>
@@ -183,7 +183,7 @@ export default function ZakazkaDetail() {
             type="date"
             value={job.remindAt ? job.remindAt.slice(0, 10) : ""}
             onChange={(e) => patch({ remindAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
-            className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+            className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
           />
         </section>
 
@@ -191,14 +191,14 @@ export default function ZakazkaDetail() {
         <MarketingSection job={job} />
 
         {/* Poznámka. */}
-        <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
+        <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
           <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">Poznámka</h2>
           <textarea
             value={job.note ?? ""}
             onChange={(e) => patch({ note: e.target.value || null })}
             rows={3}
             placeholder="Čo si treba pamätať…"
-            className="w-full resize-none rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+            className="w-full resize-none rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
           />
         </section>
 
@@ -249,7 +249,7 @@ function Field({
         }}
         placeholder={placeholder}
         autoComplete="off"
-        className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+        className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
       />
     </label>
   );

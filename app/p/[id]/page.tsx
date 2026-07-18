@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getQuote, markOpened } from "@/lib/quote/store";
+import { notifyQuoteOwner } from "@/lib/push/send";
 import InterestButtons from "./interest-buttons";
 
 /**
@@ -23,7 +24,16 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
   if (!q) notFound();
 
   // Zaznamená první otevření. Řemeslník pak ví, kdy zvednout telefon.
-  await markOpened(id);
+  // Push jen při prvním otevření — ať nechodí při každém načtení stránky.
+  const firstOpen = await markOpened(id);
+  if (firstOpen) {
+    await notifyQuoteOwner(id, {
+      title: "Zákazník otvoril ponuku",
+      body: `${q.customer.name ?? "Zákazník"} sa práve pozerá na ponuku.`,
+      url: "/zakazky",
+      tag: `opened-${id}`,
+    });
+  }
 
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900">

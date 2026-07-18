@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { markInterested } from "@/lib/quote/store";
+import { notifyQuoteOwner } from "@/lib/push/send";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,5 +18,14 @@ export const dynamic = "force-dynamic";
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const firstTime = await markInterested(id);
+  // Push majstrovi — jen poprvé, ať mu nechodí to samé dokola.
+  if (firstTime) {
+    await notifyQuoteOwner(id, {
+      title: "🔥 Zákazník má záujem!",
+      body: "Práve ťukol Mám záujem. Zavolaj mu, dokým je rozhodnutý.",
+      url: "/zakazky",
+      tag: `interest-${id}`,
+    });
+  }
   return NextResponse.json({ ok: true, firstTime }, { headers: { "Cache-Control": "no-store" } });
 }

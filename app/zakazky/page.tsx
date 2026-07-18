@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { dueReminders, listJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
 import { winStats, type WinStats } from "@/lib/crm/stats";
+import PushToggle from "../push-toggle";
 
 /**
  * Modul 1 — seznam zakázek. Domovská obrazovka CRM.
@@ -54,6 +55,9 @@ export default function Zakazky() {
             <GearIcon />
           </Link>
         </div>
+
+        {/* Upozornění do kapsy — zmizí, jakmile si je řemeslník zapne. */}
+        {filter === "vsetky" && <PushToggle />}
 
         {/* Úspešnosť — začátek datového pokladu. Ukáže se, až je co ukázat. */}
         {stats && stats.closed > 0 && filter === "vsetky" && <StatsStrip s={stats} />}

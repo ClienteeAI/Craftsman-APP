@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (buffer.length < 1000) {
       return NextResponse.json({ error: "Video je prázdne." }, { status: 400 });
     }
-    const id = saveVideo(buffer, file.type);
+    const id = await saveVideo(buffer, file.type);
     return NextResponse.json({ id });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Neznáma chyba";

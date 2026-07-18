@@ -1,4 +1,4 @@
-import { getVideo } from "@/lib/quote/video-store";
+import { getVideoSource } from "@/lib/quote/video-store";
 
 export const runtime = "nodejs";
 
@@ -9,13 +9,21 @@ export const runtime = "nodejs";
  * může stáhnout po kouskách — pošle hlavičku "Range: bytes=0-" a čeká odpověď
  * 206 s částí souboru a hlavičkou Accept-Ranges. Bez toho ukazuje přeškrtnuté
  * play. Data URL tohle neumí; tenhle endpoint ano.
+ *
+ * V ostrém provozu (Supabase) přesměrujeme na podepsaný odkaz — Range řeší
+ * jejich CDN a video neteče přes náš server. V demu servírujeme z paměti sami.
  */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const video = getVideo(id);
-  if (!video) return new Response("Not found", { status: 404 });
+  const source = await getVideoSource(id);
+  if (!source) return new Response("Not found", { status: 404 });
 
-  const { buffer, contentType } = video;
+  // Supabase: pošli prohlížeč rovnou na CDN (Range si vyřídí tam).
+  if (source.kind === "redirect") {
+    return Response.redirect(source.url, 302);
+  }
+
+  const { buffer, contentType } = source;
   const total = buffer.length;
   const range = req.headers.get("range");
 

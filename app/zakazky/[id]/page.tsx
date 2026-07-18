@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { deleteJob, getJob, STATUS, updateJob, type Job, type JobStatus } from "@/lib/crm/jobs";
+import { deleteJob, effectiveStatus, getJob, STATUS, updateJob, type Job, type JobStatus } from "@/lib/crm/jobs";
 import MarketingSection from "./marketing-section";
 import JobOffer from "./job-offer";
 import DetailsForm from "./details-form";
@@ -151,7 +151,7 @@ export default function ZakazkaDetail() {
                   key={s}
                   onClick={() => patch({ status: s })}
                   className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
-                    job.status === s
+                    effectiveStatus(job) === s
                       ? "border-neutral-900 bg-neutral-900 text-white"
                       : "border-neutral-200 bg-white hover:bg-neutral-50"
                   }`}

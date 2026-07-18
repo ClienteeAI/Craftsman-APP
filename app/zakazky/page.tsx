@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { dueReminders, listJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
+import { dueReminders, effectiveStatus, listJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
 import { winStats, type WinStats } from "@/lib/crm/stats";
 import PushToggle from "../push-toggle";
 import FollowUpStrip from "../followup-strip";
@@ -36,7 +36,7 @@ export default function Zakazky() {
     });
   }, [refresh]);
 
-  const shown = filter === "vsetky" ? jobs : jobs.filter((j) => j.status === filter);
+  const shown = filter === "vsetky" ? jobs : jobs.filter((j) => effectiveStatus(j) === filter);
   const live = jobs.filter((j) => j.status !== "hotovo" && j.status !== "straceny").length;
 
   return (
@@ -173,7 +173,7 @@ export default function Zakazky() {
 }
 
 function JobCard({ job }: { job: Job }) {
-  const s = STATUS[job.status];
+  const s = STATUS[effectiveStatus(job)];
   const eur = (n: number | null) =>
     n == null ? null : new Intl.NumberFormat("sk-SK", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 

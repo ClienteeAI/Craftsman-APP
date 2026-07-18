@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { listJobs, restoreIfEmpty, STATUS, type Job } from "@/lib/crm/jobs";
+import { effectiveStatus, listJobs, restoreIfEmpty, STATUS, type Job } from "@/lib/crm/jobs";
 
 /**
  * Zákazníci — dlaždicový prehľad kontaktov.
@@ -101,7 +101,7 @@ export default function Zakaznici() {
 function ClientTile({ job, index }: { job: Job; index: number }) {
   const c = job.customer;
   const address = (job.details?.constructionAddress as string) || c.obec || null;
-  const s = STATUS[job.status];
+  const s = STATUS[effectiveStatus(job)];
 
   return (
     <Link

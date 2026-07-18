@@ -47,6 +47,20 @@ export type Job = {
   details: JobDetails | null;
 };
 
+/**
+ * Skutečný stav pro zobrazení.
+ *
+ * Uložený status může říkat "ponuka", i když žádná nabídka nikdy nevznikla —
+ * třeba když kontakt založíš přes nabídkový tok a nedojdeš až k vygenerování,
+ * nebo starší data. Pravidlo majstra: kdo nemá odeslanou nabídku (shareUrl),
+ * je pořád jen "nový kontakt", ne "ponuka". Ostatní stavy (realizácia, hotovo,
+ * stratený) nastavuje majster ručně, ty nesaháme.
+ */
+export function effectiveStatus(job: Job): JobStatus {
+  if (job.status === "ponuka" && !job.shareUrl) return "novy";
+  return job.status;
+}
+
 const KEY = "zakazky-v1";
 
 function read(): Job[] {

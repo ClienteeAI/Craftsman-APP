@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { dueReminders, listJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
+import { dueReminders, effectiveStatus, listJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
 import { winStats } from "@/lib/crm/stats";
 
 /**
@@ -72,7 +72,7 @@ export default function Dashboard() {
   }, [jobs]);
   const chartMax = Math.max(1, ...chart.map((b) => b.value));
 
-  const shown = filter === "vsetky" ? jobs : jobs.filter((j) => j.status === filter);
+  const shown = filter === "vsetky" ? jobs : jobs.filter((j) => effectiveStatus(j) === filter);
 
   return (
     <main className="min-h-screen">
@@ -211,7 +211,7 @@ export default function Dashboard() {
                         {j.priceExVat != null ? eur(j.priceExVat) : "—"}
                       </span>
                       <span className="sm:text-right">
-                        <StatusPill status={j.status} />
+                        <StatusPill status={effectiveStatus(j)} />
                       </span>
                     </Link>
                   ))}

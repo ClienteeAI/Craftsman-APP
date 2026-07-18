@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractJob } from "@/lib/quote/extract";
+import { isUnauthenticated } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /** Nadiktovaná/napsaná řeč → parametry zakázky + doptání na chybějící. */
 export async function POST(req: NextRequest) {
+  if (await isUnauthenticated())
+    return NextResponse.json({ error: "Neprihlásený." }, { status: 401 });
   try {
     const { transcript } = await req.json();
     if (typeof transcript !== "string" || !transcript.trim()) {

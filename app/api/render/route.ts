@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { compositeRoof, normalizePhoto } from "@/lib/composite";
 import { renderRoof, type ReferenceImage } from "@/lib/gemini";
 import { PRODUCTS, type RoofProduct } from "@/lib/quote/products";
+import { isUnauthenticated } from "@/lib/supabase/server";
 
 /**
  * Produktové fotky od výrobce, stažené jednou a držené v paměti.
@@ -48,6 +49,8 @@ export const maxDuration = 60;
 const cache = new Map<string, Buffer>();
 
 export async function POST(req: NextRequest) {
+  if (await isUnauthenticated())
+    return NextResponse.json({ error: "Neprihlásený." }, { status: 401 });
   try {
     const form = await req.formData();
     const photoFile = form.get("photo");

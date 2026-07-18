@@ -46,3 +46,21 @@ export async function currentUserId(): Promise<string | null> {
   } = await supabase.auth.getUser();
   return user?.id ?? null;
 }
+
+/** Je přihlašování vůbec nastavené? (Bez anon klíče jede demo bez auth.) */
+export function authConfigured(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  );
+}
+
+/**
+ * Stráž pro drahé/soukromé API endpointy. Když je auth zapnuté a volající není
+ * přihlášený, vrací true → route má odpovědět 401. Když auth zapnuté není
+ * (demo), vrací false a nechá endpoint běžet. Chrání hlavně AI endpointy před
+ * cizím voláním, které by prohnalo účet za Gemini/Claude/ElevenLabs.
+ */
+export async function isUnauthenticated(): Promise<boolean> {
+  if (!authConfigured()) return false;
+  return !(await currentUserId());
+}

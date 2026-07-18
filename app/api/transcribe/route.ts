@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isUnauthenticated } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -11,6 +12,8 @@ export const maxDuration = 60;
  * a prirodzene opíše zákazku."
  */
 export async function POST(req: NextRequest) {
+  if (await isUnauthenticated())
+    return NextResponse.json({ error: "Neprihlásený." }, { status: 401 });
   try {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) throw new Error("Chybí ELEVENLABS_API_KEY v .env.local");

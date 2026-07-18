@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveQuote } from "@/lib/quote/store";
-import { currentUserId } from "@/lib/supabase/server";
+import { currentUserId, isUnauthenticated } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 /** Uloží nabídku a vrátí odkaz, který jde poslat zákazníkovi. */
 export async function POST(req: NextRequest) {
+  if (await isUnauthenticated())
+    return NextResponse.json({ error: "Neprihlásený." }, { status: 401 });
   try {
     const body = await req.json();
 

@@ -3,6 +3,7 @@ import { extractJob } from "@/lib/quote/extract";
 import { DEFAULT_PROFILE, type CraftsmanProfile } from "@/lib/quote/profile";
 import { computeTakeoff } from "@/lib/quote/takeoff";
 import { buildTiers } from "@/lib/quote/tiers";
+import { isUnauthenticated } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -15,6 +16,8 @@ export const maxDuration = 60;
  * Volitelně `profile` — jeho sazby a marže z nastavení.
  */
 export async function POST(req: NextRequest) {
+  if (await isUnauthenticated())
+    return NextResponse.json({ error: "Neprihlásený." }, { status: 401 });
   try {
     const body = await req.json();
     const profile: CraftsmanProfile = { ...DEFAULT_PROFILE, ...(body.profile ?? {}) };

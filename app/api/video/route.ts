@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveVideo } from "@/lib/quote/video-store";
+import { isUnauthenticated } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 /** Nahrání videa. Vrátí id, které pak cestuje s nabídkou. */
 export async function POST(req: NextRequest) {
+  if (await isUnauthenticated())
+    return NextResponse.json({ error: "Neprihlásený." }, { status: 401 });
   try {
     const form = await req.formData();
     const file = form.get("video");

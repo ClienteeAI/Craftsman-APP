@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import type { PricedItem } from "./pricing";
 import { getSupabase, withDbRetry } from "@/lib/supabase";
+import { watermark } from "@/lib/composite";
 
 /**
  * Uložené nabídky, na které se posílá odkaz zákazníkovi.
@@ -159,6 +160,24 @@ export async function saveQuote(
     signedAt: null,
     signatureUrl: null,
   };
+
+  // Vodoznak logem firmy na vizualizaci (render + varianty), ať jakýkoli
+  // obrázek, který zákazník uloží a pošle dál, nese značku řemeslníka. Původní
+  // fotku (before) neznačíme — to je jeho barák, ne naše práce.
+  const logo = parseDataUrl(saved.company.logoUrl ?? "");
+  if (logo) {
+    const wm = async (dataUrl: string | null): Promise<string | null> => {
+      if (!dataUrl?.startsWith("data:")) return dataUrl;
+      const parsed = parseDataUrl(dataUrl);
+      if (!parsed) return dataUrl;
+      const marked = await watermark(parsed.bytes, logo.bytes);
+      return `data:image/jpeg;base64,${marked.toString("base64")}`;
+    };
+    saved.imageDataUrl = await wm(saved.imageDataUrl);
+    saved.variants = await Promise.all(
+      saved.variants.map(async (v) => ({ key: v.key, url: (await wm(v.url)) ?? v.url })),
+    );
+  }
 
   const db = getSupabase();
   if (db) {

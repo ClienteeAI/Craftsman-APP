@@ -705,40 +705,59 @@ function TierPicker({
   onSelect: (t: TierId) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      {tiers.map((t) => {
-        const on = t.id === selected;
-        return (
-          <button
-            key={t.id}
-            onClick={() => onSelect(t.id)}
-            className={`relative rounded-2xl border p-4 text-left transition ${
-              on ? "border-brand-600 bg-brand-600 text-white" : "border-neutral-200 hover:border-neutral-400"
-            }`}
-          >
-            {t.recommended && (
-              <span
-                className={`absolute -top-2 right-3 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                  on ? "bg-white text-neutral-900" : "bg-neutral-900 text-white"
-                }`}
-              >
-                ODPORÚČAME
-              </span>
-            )}
-            <p className="text-xs uppercase tracking-widest text-neutral-400">{t.name}</p>
-            <p className={`mt-0.5 text-sm font-medium `}>
-              {t.product.brand} {t.product.model}
-              {t.asDictated && <span className="ml-1 text-xs font-normal opacity-60">· povedal si</span>}
-            </p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">
-              {eur(t.quote.totalExVat)}
-            </p>
-            <p className={`mt-2 text-xs leading-relaxed ${on ? "text-neutral-300" : "text-neutral-500"}`}>
-              {t.pitch}
-            </p>
-          </button>
-        );
-      })}
+    <div>
+      <p className="mb-2 text-xs font-medium uppercase tracking-widest text-neutral-400">
+        Krytina — vyber podľa vzhľadu (vidí len ty, prepíše sa do ceny aj vizualizácie)
+      </p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {tiers.map((t) => {
+          const on = t.id === selected;
+          return (
+            <button
+              key={t.id}
+              onClick={() => onSelect(t.id)}
+              className={`relative overflow-hidden rounded-2xl border-2 text-left transition ${
+                on
+                  ? "border-brand-600 shadow-lift ring-2 ring-brand-500/20"
+                  : "border-neutral-200 hover:border-neutral-300 hover:shadow-soft"
+              }`}
+            >
+              {/* Fotka tašky — ať majster vybírá očima, nemusí znát názvy. */}
+              <div className="relative aspect-[4/3] w-full bg-neutral-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={t.product.imageUrl}
+                  alt={`${t.product.brand} ${t.product.model}`}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+                {on && (
+                  <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-xs text-white shadow-soft">
+                    ✓
+                  </span>
+                )}
+                {t.recommended && (
+                  <span className="absolute left-2 top-2 rounded-full bg-neutral-900/85 px-2 py-0.5 text-[10px] font-semibold text-white">
+                    ODPORÚČAME
+                  </span>
+                )}
+              </div>
+
+              <div className="p-4">
+                <p className="text-xs uppercase tracking-widest text-neutral-400">{t.name}</p>
+                <p className="mt-0.5 text-sm font-medium">
+                  {t.product.brand} {t.product.model}
+                  {t.asDictated && <span className="ml-1 text-xs font-normal text-neutral-400">· povedal si</span>}
+                </p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">
+                  {eur(t.quote.totalExVat)}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-neutral-500">{t.pitch}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

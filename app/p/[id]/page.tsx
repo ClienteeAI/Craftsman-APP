@@ -21,6 +21,22 @@ export const dynamic = "force-dynamic";
 const eur = (n: number) =>
   new Intl.NumberFormat("sk-SK", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
+const dni = (n: number) => (n === 1 ? "deň" : n < 5 ? "dni" : "dní");
+
+/**
+ * Orientační délka realizace z plochy střechy (položka práce v m²). Parta
+ * zvládne ~35–55 m²/den; demontáž staré krytiny přidá den. Vědomě „+-".
+ */
+function estimateDuration(items: { kind: string; unit: string; qty: number | null; label: string }[]): string | null {
+  const areaItem = items.find((i) => i.kind === "praca" && i.unit === "m²");
+  const area = typeof areaItem?.qty === "number" ? areaItem.qty : null;
+  if (!area || area <= 0) return null;
+  const extra = items.some((i) => /demont/i.test(i.label)) ? 1 : 0;
+  const low = Math.max(1, Math.ceil(area / 55) + extra);
+  const high = Math.max(low, Math.ceil(area / 35) + extra);
+  return low === high ? `približne ${low} ${dni(low)}` : `približne ${low}–${high} dní`;
+}
+
 export default async function PublicQuote({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const q = await getQuote(id);
@@ -37,6 +53,8 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
       tag: `opened-${id}`,
     });
   }
+
+  const duration = estimateDuration(q.items);
 
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900">
@@ -114,6 +132,17 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
               </div>
             )}
           </section>
+        )}
+
+        {/* Odhad dĺžky realizácie — zákazník chce vedieť, „ako dlho to bude trvať". */}
+        {duration && (
+          <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+            <span className="text-neutral-400">⏱️</span>
+            <span className="text-[15px]">
+              Realizácia trvá <span className="font-medium">{duration}</span>{" "}
+              <span className="text-neutral-400">(orientačne, upresní sa po zameraní)</span>
+            </span>
+          </div>
         )}
 
         <section className="mt-4 overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft">

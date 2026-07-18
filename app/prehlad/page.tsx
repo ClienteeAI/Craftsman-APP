@@ -91,6 +91,9 @@ export default function Dashboard() {
             <Link href="/zakazky" className="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-900">
               Zákazky
             </Link>
+            <Link href="/kalendar" className="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-900">
+              Kalendár
+            </Link>
           </nav>
 
           <Link

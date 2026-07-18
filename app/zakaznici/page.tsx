@@ -88,8 +88,8 @@ export default function Zakaznici() {
           </div>
         ) : (
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {shown.map((j) => (
-              <ClientTile key={j.id} job={j} />
+            {shown.map((j, i) => (
+              <ClientTile key={j.id} job={j} index={i} />
             ))}
           </div>
         )}
@@ -98,7 +98,7 @@ export default function Zakaznici() {
   );
 }
 
-function ClientTile({ job }: { job: Job }) {
+function ClientTile({ job, index }: { job: Job; index: number }) {
   const c = job.customer;
   const address = (job.details?.constructionAddress as string) || c.obec || null;
   const s = STATUS[job.status];
@@ -106,6 +106,7 @@ function ClientTile({ job }: { job: Job }) {
   return (
     <Link
       href={`/zakazky/${job.id}`}
+      style={{ animation: "fadeInUp 0.35s ease both", animationDelay: `${Math.min(index, 20) * 35}ms` }}
       className="group block rounded-2xl border border-neutral-200/70 bg-white p-4 shadow-soft transition hover:border-brand-300 hover:shadow-lift"
     >
       <div className="flex items-center gap-3">

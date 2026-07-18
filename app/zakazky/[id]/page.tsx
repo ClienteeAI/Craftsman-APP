@@ -53,158 +53,129 @@ export default function ZakazkaDetail() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900">
-      <div className="mx-auto max-w-2xl px-5 py-8 pb-28">
-        <Link href="/zakazky" className="text-sm text-neutral-500 underline underline-offset-4">
-          ← Späť na zákazky
+    <main className="min-h-screen text-neutral-900">
+      <div className="mx-auto max-w-7xl px-5 py-6 sm:px-8">
+        <Link href="/zakaznici" className="text-sm text-neutral-500 underline underline-offset-4 hover:text-neutral-900">
+          ← Späť na zákazníkov
         </Link>
 
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">{job.customer.name ?? "Bez mena"}</h1>
-        <p className="mt-1 text-neutral-500">{job.summary}</p>
-
-        {/* Nabídka pro TENHLE kontakt. Otevře quote flow předvyplněný zákazníkem —
-            majster tam prilepí mail (text i fotky) a appka vytáhne zbytek. Po
-            odeslání se nabídka přilepí zpátky na tuhle kartu. */}
-        <Link
-          href={`/?zakazka=${job.id}`}
-          className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 active:opacity-90"
-        >
-          {job.shareUrl ? "Nová ponuka pre kontakt" : "Vytvoriť ponuku"}
-        </Link>
-
-        {/* Stav — přepínač. Toto je jádro CRM: kde v procesu zakázka je. */}
-        <section className="mt-6">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">Stav</h2>
-          <div className="flex flex-wrap gap-2">
-            {(Object.keys(STATUS) as JobStatus[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => patch({ status: s })}
-                className={`rounded-xl border px-3.5 py-2.5 text-sm font-medium ${
-                  job.status === s
-                    ? "border-neutral-900 bg-neutral-900 text-white"
-                    : "border-neutral-200 bg-white active:bg-neutral-100"
-                }`}
-              >
-                {STATUS[s].dot} {STATUS[s].label}
-              </button>
-            ))}
+        {/* Hlavička: meno + stav vľavo, akcia vpravo. */}
+        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-semibold tracking-tight">{job.customer.name ?? "Bez mena"}</h1>
+            {job.summary && <p className="mt-1 text-neutral-500">{job.summary}</p>}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(Object.keys(STATUS) as JobStatus[]).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => patch({ status: s })}
+                  className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                    job.status === s
+                      ? "border-neutral-900 bg-neutral-900 text-white"
+                      : "border-neutral-200 bg-white hover:bg-neutral-50"
+                  }`}
+                >
+                  {STATUS[s].dot} {STATUS[s].label}
+                </button>
+              ))}
+            </div>
           </div>
-        </section>
+          <Link
+            href={`/?zakazka=${job.id}`}
+            className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 active:opacity-90"
+          >
+            {job.shareUrl ? "Nová ponuka pre kontakt" : "Vytvoriť ponuku"}
+          </Link>
+        </div>
 
-        {/* Kontakt — editovatelný. Doplníš meno, telefón, mail aj u zákazky,
-            ktorá prišla bez nich (napr. z mailu bez podpisu). */}
-        <section className="mt-8 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
-            Kontakt
-          </h2>
-          <div className="space-y-3">
-            <Field
-              label="Meno a priezvisko"
-              value={job.customer.name}
-              placeholder="Ján Novák"
-              onCommit={(v) => setCustomerField("name", v)}
-            />
-            <Field
-              label="Obec"
-              value={job.customer.obec}
-              placeholder="Bratislava"
-              onCommit={(v) => setCustomerField("obec", v)}
-            />
-            <Field
-              label="Telefón"
-              type="tel"
-              value={job.customer.phone}
-              placeholder="0901 234 567"
-              onCommit={(v) => setCustomerField("phone", v)}
-            />
-            <Field
-              label="E-mail"
-              type="email"
-              value={job.customer.email}
-              placeholder="jan@email.sk"
-              onCommit={(v) => setCustomerField("email", v)}
-            />
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {job.customer.phone && (
-              <a
-                href={`tel:${job.customer.phone}`}
-                className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft transition hover:bg-brand-700"
-              >
-                Zavolať
-              </a>
-            )}
-            {job.customer.obec && (
-              <a
-                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.customer.obec)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-xl border border-neutral-300 px-4 py-2.5 text-sm font-medium active:bg-neutral-100"
-              >
-                Navigovať
-              </a>
+        {/* Horní pruh: vlevo kontakt + odeslaná nabídka, vpravo poznámka + termíny. */}
+        <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <div className="space-y-5 lg:col-span-2">
+            {/* Kontakt */}
+            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
+                Kontakt
+              </h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="Meno a priezvisko" value={job.customer.name} placeholder="Ján Novák" onCommit={(v) => setCustomerField("name", v)} />
+                <Field label="Obec" value={job.customer.obec} placeholder="Bratislava" onCommit={(v) => setCustomerField("obec", v)} />
+                <Field label="Telefón" type="tel" value={job.customer.phone} placeholder="0901 234 567" onCommit={(v) => setCustomerField("phone", v)} />
+                <Field label="E-mail" type="email" value={job.customer.email} placeholder="jan@email.sk" onCommit={(v) => setCustomerField("email", v)} />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {job.customer.phone && (
+                  <a href={`tel:${job.customer.phone}`} className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-soft transition hover:bg-brand-700">
+                    Zavolať
+                  </a>
+                )}
+                {job.customer.obec && (
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(job.customer.obec)}`} target="_blank" rel="noreferrer" className="rounded-xl border border-neutral-300 px-4 py-2.5 text-sm font-medium hover:bg-neutral-50">
+                    Navigovať
+                  </a>
+                )}
+              </div>
+            </section>
+
+            {/* Odoslaná ponuka */}
+            {job.shareUrl ? (
+              <JobOffer shareUrl={job.shareUrl} priceExVat={job.priceExVat} />
+            ) : (
+              <section className="rounded-2xl border border-dashed border-neutral-300 p-5 text-center">
+                <p className="text-sm font-medium text-neutral-600">Táto zákazka zatiaľ nemá ponuku.</p>
+                <p className="mt-1 text-xs leading-relaxed text-neutral-400">
+                  Nemusíš nič robiť odznova — ťukni hore na „Vytvoriť ponuku". Po odoslaní sa sem
+                  pripojí cena aj živý stav (otvoril / má záujem / podpísal).
+                </p>
+              </section>
             )}
           </div>
-        </section>
 
-        {/* Odoslaná ponuka — cena, odkaz na to, co vidí zákazník, a živý stav. */}
-        {job.shareUrl ? (
-          <JobOffer shareUrl={job.shareUrl} priceExVat={job.priceExVat} />
-        ) : (
-          <section className="mt-6 rounded-2xl border border-dashed border-neutral-300 p-5 text-center">
-            <p className="text-sm font-medium text-neutral-600">Táto zákazka zatiaľ nemá ponuku.</p>
-            <p className="mt-1 text-xs leading-relaxed text-neutral-400">
-              Nemusíš nič robiť odznova — ťukni hore na „Vytvoriť ponuku". Po odoslaní sa sem
-              pripojí cena aj živý stav (otvoril / má záujem / podpísal).
-            </p>
-          </section>
-        )}
+          {/* Pravý sidebar */}
+          <div className="space-y-5">
+            {/* Poznámka */}
+            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">Poznámka</h2>
+              <textarea
+                value={job.note ?? ""}
+                onChange={(e) => patch({ note: e.target.value || null })}
+                rows={4}
+                placeholder="Čo si treba pamätať…"
+                className="w-full resize-none rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
+              />
+            </section>
 
-        {/* Obsáhlé parametry zakázky — fakturace, technická střecha, prostupy… */}
+            {/* Termín realizace */}
+            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+              <h2 className="mb-1 text-xs font-semibold uppercase tracking-widest text-neutral-400">Termín realizácie</h2>
+              <p className="mb-2 text-xs text-neutral-400">Kedy začneme pracovať.</p>
+              <input
+                type="date"
+                value={job.startAt ? job.startAt.slice(0, 10) : ""}
+                onChange={(e) => patch({ startAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
+              />
+            </section>
+
+            {/* Připomenutí */}
+            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">Pripomenúť zavolať</h2>
+              <input
+                type="date"
+                value={job.remindAt ? job.remindAt.slice(0, 10) : ""}
+                onChange={(e) => patch({ remindAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
+              />
+            </section>
+          </div>
+        </div>
+
+        {/* Parametry zakázky — kartičky přes celou šířku (masonry). */}
         <DetailsForm details={job.details} onChange={(details) => patch({ details })} />
 
-        {/* Termín realizace — kdy začneme pracovat (jiné než připomenutí zavolat). */}
-        <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">
-            Termín realizácie
-          </h2>
-          <p className="-mt-1 mb-2 text-xs text-neutral-400">Kedy na zákazke začneme pracovať.</p>
-          <input
-            type="date"
-            value={job.startAt ? job.startAt.slice(0, 10) : ""}
-            onChange={(e) => patch({ startAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
-            className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
-          />
-        </section>
-
-        {/* Připomenutí. */}
-        <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">
-            Pripomenúť zavolať
-          </h2>
-          <input
-            type="date"
-            value={job.remindAt ? job.remindAt.slice(0, 10) : ""}
-            onChange={(e) => patch({ remindAt: e.target.value ? new Date(e.target.value).toISOString() : null })}
-            className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
-          />
-        </section>
-
-        {/* Auto-marketing — nejsilnější u hotové zakázky, ale dostupné vždy. */}
-        <MarketingSection job={job} />
-
-        {/* Poznámka. */}
-        <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">Poznámka</h2>
-          <textarea
-            value={job.note ?? ""}
-            onChange={(e) => patch({ note: e.target.value || null })}
-            rows={3}
-            placeholder="Čo si treba pamätať…"
-            className="w-full resize-none rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
-          />
-        </section>
+        {/* Auto-marketing */}
+        <div className="mt-5">
+          <MarketingSection job={job} />
+        </div>
 
         <button
           onClick={() => {

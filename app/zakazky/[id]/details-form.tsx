@@ -27,21 +27,23 @@ export default function DetailsForm({
   }
 
   return (
-    <div className="mt-6 space-y-3">
-      <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+    <div className="mt-8">
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
         Parametre zákazky
       </h2>
-      {SECTIONS.map((s) => {
-        const isOpen = open === s.title;
-        const filled = s.fields.filter((f) => {
-          const v = d[f.key];
-          return v != null && v !== "" && v !== false;
-        }).length;
-        return (
-          <section
-            key={s.title}
-            className="overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft"
-          >
+      {/* Masonry — kartičky vedle sebe, ať se využije šířka a míň scrolluje. */}
+      <div className="columns-1 gap-4 md:columns-2 xl:columns-3 [&>section]:mb-4 [&>section]:break-inside-avoid">
+        {SECTIONS.map((s) => {
+          const isOpen = open === s.title;
+          const filled = s.fields.filter((f) => {
+            const v = d[f.key];
+            return v != null && v !== "" && v !== false;
+          }).length;
+          return (
+            <section
+              key={s.title}
+              className="overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft"
+            >
             <button
               onClick={() => setOpen(isOpen ? null : s.title)}
               className="flex w-full items-center justify-between gap-3 p-5 text-left"
@@ -71,9 +73,10 @@ export default function DetailsForm({
                 </div>
               </div>
             )}
-          </section>
-        );
-      })}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

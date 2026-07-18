@@ -22,7 +22,7 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - ⬜ PDF „Vizualizace vašeho domu" (důvod říct si o e-mail)
 - ⬜ QR kód na vzorníku v prodejně
 - ⬜ Kioskový režim na veletrh (tablet na stánku)
-- ⬜ Celý systém, ne jen taška (okapy, oplechování, hřebenáče, okna)
+- 🟡 Celý systém (okapy, oplechování, hřebenáče, okna) — engine umí + upsell palette; chybí solár/FV
 - ⬜ Solár (sklon+orientace+plocha → kWh, přes PVGIS zdarma)
 - ⬜ Fotovoltaické panely vidět v renderu
 - ⬜ Barevný poradce (vidí fasádu, doporučí krytiny)
@@ -46,9 +46,9 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - ✅ Video zpráva v nabídce
 - ✅ Automatický follow-up ⭐ („postrč nabídku" — otevřel a mlčí / neotevřel)
 - ✅ Nemá marketing a nikdy mít nebude ⭐ (auto FB příspěvek / recenze / portfolio)
+- ✅ Šablony („dělám pořád to samé") — uloží text, načte na ťuknutí
 - ⬜ Podpis a záloha rovnou v odkazu (cyklus z týdnů na hodinu)
 - ⬜ Nákupní seznam jedním klikem do velkoobchodu
-- ⬜ Šablony („dělám pořád to samé")
 - ⬜ Krajský benchmark ⭐ („u vás se to dělá za 5–7k, ty dáváš 4,2") — moat
 - ⬜ „V téhle ulici jsme dělali tři střechy" (s fotkami, automaticky)
 - ⬜ Zakázkový list v ukrajinštině (nabídka SK, příkaz partě jejich jazykem)

@@ -11,6 +11,7 @@ import { checkQuote, type CheckFinding } from "@/lib/quote/check";
 import { getJob, upsertJob } from "@/lib/crm/jobs";
 import { loadProfile } from "@/lib/quote/profile-store";
 import { recomputeTotals, repriceItem } from "@/lib/quote/totals";
+import { deleteTemplate, listTemplates, saveTemplate, type Template } from "@/lib/quote/templates";
 import RoofPhoto from "./roof-photo";
 import VideoMessage from "./video-message";
 
@@ -48,6 +49,8 @@ export default function QuoteFlow({ company }: { company: string }) {
   // Fotky vložené/nahrané z mailu. První se použije na střechu (vizualizace
   // + diagnóza), ať majster nemusí nic nahrávat zvlášť.
   const [mailPhotos, setMailPhotos] = useState<File[]>([]);
+  // Šablony častých zakázek — „dělám pořád to samé".
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [videoUploading, setVideoUploading] = useState(false);
   const [live, setLive] = useState<{
     items: PricedItem[];
@@ -73,6 +76,20 @@ export default function QuoteFlow({ company }: { company: string }) {
     setCustomer(job.customer);
     if (job.note) setTranscript(job.note);
   }, []);
+
+  useEffect(() => setTemplates(listTemplates()), []);
+
+  function saveCurrentAsTemplate() {
+    const name = window.prompt("Názov šablóny:", transcript.slice(0, 30));
+    if (!name?.trim()) return;
+    saveTemplate(name, transcript);
+    setTemplates(listTemplates());
+  }
+
+  function removeTemplate(id: string) {
+    deleteTemplate(id);
+    setTemplates(listTemplates());
+  }
 
   async function startRecording() {
     setError(null);
@@ -304,7 +321,35 @@ export default function QuoteFlow({ company }: { company: string }) {
               </p>
             </div>
 
-            <div className="mt-10">
+            {/* Šablony — „dělám pořád to samé". Ťuknutí načte text. */}
+            {templates.length > 0 && (
+              <div className="mt-8">
+                <p className="mb-2 text-xs font-medium uppercase tracking-widest text-neutral-400">
+                  Šablóny
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {templates.map((t) => (
+                    <span
+                      key={t.id}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white py-1.5 pl-3.5 pr-1.5 text-sm"
+                    >
+                      <button onClick={() => setTranscript(t.transcript)} className="font-medium text-neutral-700">
+                        {t.name}
+                      </button>
+                      <button
+                        onClick={() => removeTemplate(t.id)}
+                        aria-label={`Zmazať šablónu ${t.name}`}
+                        className="flex h-6 w-6 items-center justify-center rounded-full text-neutral-300 active:bg-neutral-100"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8">
               <p className="mb-2 text-sm text-neutral-500">
                 …alebo napíš, čo si videl — <span className="text-neutral-700">alebo sem rovno prilep celý dopyt z mailu, aj s fotkami.</span>
               </p>
@@ -358,13 +403,23 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
                 ))}
               </div>
 
-              <button
-                onClick={() => analyse(transcript)}
-                disabled={busy || transcript.trim().length < 10}
-                className="mt-4 rounded-xl bg-neutral-900 px-5 py-3 font-medium text-white disabled:opacity-30"
-              >
-                Spracovať
-              </button>
+              <div className="mt-4 flex items-center gap-3">
+                <button
+                  onClick={() => analyse(transcript)}
+                  disabled={busy || transcript.trim().length < 10}
+                  className="rounded-xl bg-neutral-900 px-5 py-3 font-medium text-white disabled:opacity-30"
+                >
+                  Spracovať
+                </button>
+                {transcript.trim().length >= 10 && (
+                  <button
+                    onClick={saveCurrentAsTemplate}
+                    className="text-sm text-neutral-500 underline underline-offset-4"
+                  >
+                    Uložiť ako šablónu
+                  </button>
+                )}
+              </div>
             </div>
           </>
         )}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { deleteJob, getJob, STATUS, updateJob, type Job, type JobStatus } from "@/lib/crm/jobs";
+import MarketingSection from "./marketing-section";
 
 /**
  * Karta zákazníka — detail zakázky.
@@ -133,6 +134,9 @@ export default function ZakazkaDetail() {
             className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
           />
         </section>
+
+        {/* Auto-marketing — nejsilnější u hotové zakázky, ale dostupné vždy. */}
+        <MarketingSection job={job} />
 
         {/* Poznámka. */}
         <section className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">

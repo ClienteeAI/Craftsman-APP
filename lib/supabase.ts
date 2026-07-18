@@ -37,3 +37,28 @@ export function getSupabase(): SupabaseClient | null {
 export function isSupabaseConfigured(): boolean {
   return Boolean(url && serviceKey);
 }
+
+/**
+ * Retry na PŘECHODNÉ síťové chyby (studené spojení, TLS, výpadek Wi-Fi na
+ * střeše). supabase-js vrátí { error } — když vypadá přechodně, zkusíme to
+ * znovu s krátkým odstupem. Skutečné chyby (porušený constraint apod.) vrací
+ * hned, ať se nic zbytečně neopakuje.
+ *
+ * Pro zákaznicky viditelné zápisy (nabídka, video) — jedno zaškobrtnutí sítě
+ * nesmí shodit odeslání nabídky.
+ */
+export async function withDbRetry<T>(
+  fn: () => PromiseLike<{ data: T; error: { message?: string } | null }>,
+  tries = 3,
+): Promise<{ data: T; error: { message?: string } | null }> {
+  let result: { data: T; error: { message?: string } | null } = { data: null as T, error: null };
+  for (let i = 0; i < tries; i++) {
+    result = await fn();
+    if (!result.error) return result;
+    const msg = String(result.error.message ?? "");
+    const transient = /fetch failed|network|timeout|ECONNRESET|EAI_AGAIN|socket|ETIMEDOUT/i.test(msg);
+    if (!transient || i === tries - 1) return result;
+    await new Promise((r) => setTimeout(r, 250 * (i + 1)));
+  }
+  return result;
+}

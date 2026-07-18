@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 import type { PricedItem } from "./pricing";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabase, withDbRetry } from "@/lib/supabase";
 
 /**
  * Uložené nabídky, na které se posílá odkaz zákazníkovi.
@@ -91,22 +91,24 @@ export async function saveQuote(
 
   const db = getSupabase();
   if (db) {
-    const { error } = await db.from("quotes").insert({
-      id: saved.id,
-      created_at: saved.createdAt,
-      company: saved.company,
-      customer: saved.customer,
-      summary: saved.summary,
-      tier_name: saved.tierName,
-      product_name: saved.productName,
-      earliest_term: saved.earliestTerm,
-      items: saved.items,
-      totals: saved.totals,
-      range: saved.range,
-      assumptions: saved.assumptions,
-      image_url: saved.imageDataUrl,
-      video_id: saved.videoId,
-    });
+    const { error } = await withDbRetry(() =>
+      db.from("quotes").insert({
+        id: saved.id,
+        created_at: saved.createdAt,
+        company: saved.company,
+        customer: saved.customer,
+        summary: saved.summary,
+        tier_name: saved.tierName,
+        product_name: saved.productName,
+        earliest_term: saved.earliestTerm,
+        items: saved.items,
+        totals: saved.totals,
+        range: saved.range,
+        assumptions: saved.assumptions,
+        image_url: saved.imageDataUrl,
+        video_id: saved.videoId,
+      }),
+    );
     if (error) throw new Error(`Uloženie ponuky zlyhalo: ${error.message}`);
     return saved;
   }
@@ -118,9 +120,11 @@ export async function saveQuote(
 export async function getQuote(id: string): Promise<SharedQuote | undefined> {
   const db = getSupabase();
   if (db) {
-    const { data, error } = await db.from("quotes").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await withDbRetry(() =>
+      db.from("quotes").select("*").eq("id", id).maybeSingle(),
+    );
     if (error) throw new Error(`Načítanie ponuky zlyhalo: ${error.message}`);
-    return data ? rowToQuote(data) : undefined;
+    return data ? rowToQuote(data as Record<string, unknown>) : undefined;
   }
   return mem.get(id);
 }
@@ -136,12 +140,14 @@ export async function markOpened(id: string): Promise<boolean> {
   const db = getSupabase();
   if (db) {
     // Jen když ještě není otevřená (opened_at is null) → true právě jednou.
-    const { data, error } = await db
-      .from("quotes")
-      .update({ opened_at: new Date().toISOString() })
-      .eq("id", id)
-      .is("opened_at", null)
-      .select("id");
+    const { data, error } = await withDbRetry(() =>
+      db
+        .from("quotes")
+        .update({ opened_at: new Date().toISOString() })
+        .eq("id", id)
+        .is("opened_at", null)
+        .select("id"),
+    );
     if (error) throw new Error(`Označenie otvorenia zlyhalo: ${error.message}`);
     return (data?.length ?? 0) > 0;
   }
@@ -163,12 +169,14 @@ export async function markInterested(id: string): Promise<boolean> {
   const db = getSupabase();
   if (db) {
     // Zájem zároveň zaručí, že je nabídka označená jako otevřená.
-    const { data, error } = await db
-      .from("quotes")
-      .update({ interested_at: now, opened_at: now })
-      .eq("id", id)
-      .is("interested_at", null)
-      .select("id");
+    const { data, error } = await withDbRetry(() =>
+      db
+        .from("quotes")
+        .update({ interested_at: now, opened_at: now })
+        .eq("id", id)
+        .is("interested_at", null)
+        .select("id"),
+    );
     if (error) throw new Error(`Označenie záujmu zlyhalo: ${error.message}`);
     return (data?.length ?? 0) > 0;
   }

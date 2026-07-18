@@ -16,7 +16,7 @@
  */
 
 import { randomBytes } from "crypto";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabase, withDbRetry } from "@/lib/supabase";
 
 const BUCKET = "videos";
 
@@ -31,10 +31,9 @@ export async function saveVideo(buffer: Buffer, contentType: string): Promise<st
 
   const db = getSupabase();
   if (db) {
-    const { error } = await db.storage.from(BUCKET).upload(id, buffer, {
-      contentType: type,
-      upsert: false,
-    });
+    const { error } = await withDbRetry(() =>
+      db.storage.from(BUCKET).upload(id, buffer, { contentType: type, upsert: false }),
+    );
     if (error) throw new Error(`Uloženie videa zlyhalo: ${error.message}`);
     return id;
   }

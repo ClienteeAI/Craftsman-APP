@@ -18,7 +18,7 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - ✅ Stárnutí („takhle za 15 let") — varianta „O 15 rokov"
 - ⬜ Krátké video místo obrázku (2s morf stará→nová, loop)
 - ⬜ Sdílení s vodoznakem ⭐ (logo výrobce na každém obrázku)
-- ⬜ „Zeptej se manželky" (3 varianty odkazem, ona hlasuje)
+- ✅ „Zeptej se manželky" (3 cenové úrovně, zákazník vybere → majster to vidí)
 - ⬜ PDF „Vizualizace vašeho domu" (důvod říct si o e-mail)
 - ⬜ QR kód na vzorníku v prodejně
 - ⬜ Kioskový režim na veletrh (tablet na stánku)
@@ -49,7 +49,7 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - ✅ Šablony („dělám pořád to samé") — uloží text, načte na ťuknutí
 - ✅ Nákupní seznam jedním klikem do velkoobchodu
 - ✅ Zákazkový list v ukrajinštině (i PL/RO/HU) — příkaz partě v jejich jazyce
-- ⬜ Podpis a záloha rovnou v odkazu (cyklus z týdnů na hodinu)
+- 🟡 Podpis a záloha v odkazu — podpis prstem HOTOVO; reálná platba zálohy (Stripe) zvlášť
 - ⬜ Krajský benchmark ⭐ („u vás se to dělá za 5–7k, ty dáváš 4,2") — moat
 - ⬜ „V téhle ulici jsme dělali tři střechy" (s fotkami, automaticky)
 - ⬜ Zakázkový list v ukrajinštině (nabídka SK, příkaz partě jejich jazykem)

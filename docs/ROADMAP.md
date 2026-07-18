@@ -23,7 +23,7 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - ⬜ QR kód na vzorníku v prodejně
 - ⬜ Kioskový režim na veletrh (tablet na stánku)
 - 🟡 Celý systém (okapy, oplechování, hřebenáče, okna) — engine umí + upsell palette; chybí solár/FV
-- ⬜ Solár (sklon+orientace+plocha → kWh, přes PVGIS zdarma)
+- ✅ Solár (sklon+orientace+plocha → kWh/rok + úspora, přes PVGIS zdarma)
 - ⬜ Fotovoltaické panely vidět v renderu
 - ⬜ Barevný poradce (vidí fasádu, doporučí krytiny)
 - ⬜ Fasáda taky (maska fasády je po masce střechy skoro zdarma)

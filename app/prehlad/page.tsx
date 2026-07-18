@@ -88,6 +88,9 @@ export default function Dashboard() {
             <Link href="/" className="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-900">
               Nová ponuka
             </Link>
+            <Link href="/zakaznici" className="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-900">
+              Zákazníci
+            </Link>
             <Link href="/zakazky" className="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-900">
               Zákazky
             </Link>
@@ -112,6 +115,7 @@ export default function Dashboard() {
             value={String(clients)}
             sub={`${active} aktívnych`}
             delta={clientsDelta}
+            href="/zakaznici"
           />
           <Kpi label="Tržby (odoslané ponuky)" value={eur(revenue)} sub="spolu bez DPH" />
           <Kpi
@@ -260,9 +264,21 @@ export default function Dashboard() {
   );
 }
 
-function Kpi({ label, value, sub, delta }: { label: string; value: string; sub: string; delta?: number }) {
-  return (
-    <div className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+function Kpi({
+  label,
+  value,
+  sub,
+  delta,
+  href,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  delta?: number;
+  href?: string;
+}) {
+  const inner = (
+    <>
       <div className="flex items-center justify-between">
         <p className="text-sm text-neutral-500">{label}</p>
         {delta != null && delta !== 0 && (
@@ -277,8 +293,19 @@ function Kpi({ label, value, sub, delta }: { label: string; value: string; sub: 
         )}
       </div>
       <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
-      <p className="mt-1 text-xs text-neutral-400">{sub}</p>
-    </div>
+      <p className="mt-1 text-xs text-neutral-400">
+        {sub}
+        {href && <span className="text-brand-700"> · zobraziť →</span>}
+      </p>
+    </>
+  );
+  const cls = "block rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft";
+  return href ? (
+    <Link href={href} className={`${cls} transition hover:border-brand-300 hover:shadow-lift`}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={cls}>{inner}</div>
   );
 }
 

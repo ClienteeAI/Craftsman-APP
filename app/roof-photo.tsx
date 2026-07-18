@@ -29,6 +29,12 @@ export default function RoofPhoto({
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Atmosférické varianty (léto/sníh/večer/stárnutí). Základní render si držíme
+  // zvlášť, ať jde přepínat tam a zpět; hotové varianty cachujeme.
+  const baseResult = useRef<{ objUrl: string; dataUrl: string } | null>(null);
+  const variantCache = useRef<Map<string, { objUrl: string; dataUrl: string }>>(new Map());
+  const [activeVariant, setActiveVariant] = useState<string>("original");
+  const [varying, setVarying] = useState<string | null>(null);
   const [brush, setBrush] = useState(44);
   const [hasMask, setHasMask] = useState(false);
   const [split, setSplit] = useState(50);
@@ -121,14 +127,20 @@ export default function RoofPhoto({
       const res = await fetch("/api/render", { method: "POST", body: form });
       if (!res.ok) throw new Error((await res.json()).error ?? `HTTP ${res.status}`);
       const blob = await res.blob();
-      setResultUrl(URL.createObjectURL(blob));
+      const objUrl = URL.createObjectURL(blob);
+      setResultUrl(objUrl);
+      // Nový základní render → zahodíme staré varianty a vrátíme se na „pôvodné".
+      variantCache.current.clear();
+      setActiveVariant("original");
       // data URL, ne object URL — object URL platí jen v této záložce a na
       // serveru by z něj nešlo nic uložit.
-      if (onRendered) {
-        const reader = new FileReader();
-        reader.onload = () => onRendered(String(reader.result));
-        reader.readAsDataURL(blob);
-      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result);
+        baseResult.current = { objUrl, dataUrl };
+        onRendered?.(dataUrl);
+      };
+      reader.readAsDataURL(blob);
       renderedFor.current = productId;
       setSplit(50);
       setPhase("done");
@@ -138,6 +150,57 @@ export default function RoofPhoto({
     }
   }
   renderRef.current = render;
+
+  /**
+   * Přepnutí atmosférické varianty (léto/sníh/večer/stárnutí) nad hotovým
+   * renderem. „Pôvodné" a už vygenerované varianty jsou z cache okamžité;
+   * nová se dogeneruje. Zobrazený obrázek zároveň putuje do nabídky.
+   */
+  async function applyVariant(key: string) {
+    const base = baseResult.current;
+    if (!base || varying) return;
+
+    if (key === "original") {
+      setResultUrl(base.objUrl);
+      setActiveVariant("original");
+      onRendered?.(base.dataUrl);
+      return;
+    }
+
+    const cached = variantCache.current.get(key);
+    if (cached) {
+      setResultUrl(cached.objUrl);
+      setActiveVariant(key);
+      onRendered?.(cached.dataUrl);
+      return;
+    }
+
+    setVarying(key);
+    setError(null);
+    try {
+      const res = await fetch("/api/render/variant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base.dataUrl, variant: key }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? `HTTP ${res.status}`);
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = String(reader.result);
+        variantCache.current.set(key, { objUrl, dataUrl });
+        setResultUrl(objUrl);
+        setActiveVariant(key);
+        onRendered?.(dataUrl);
+      };
+      reader.readAsDataURL(blob);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Variant sa nepodaril.");
+    } finally {
+      setVarying(null);
+    }
+  }
 
   /**
    * Majster přepnul cenovou hladinu → jiná taška → překreslíme.
@@ -232,6 +295,38 @@ export default function RoofPhoto({
       {phase === "done" && photoUrl && resultUrl && (
         <div className="p-5">
           <BeforeAfter before={photoUrl} after={resultUrl} split={split} onSplit={setSplit} />
+
+          {/* Atmosférické varianty — obrázek, který si zákazník uloží. */}
+          <div className="mt-4">
+            <p className="mb-2 text-xs font-medium uppercase tracking-widest text-neutral-400">
+              Atmosféra
+            </p>
+            <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
+              {(
+                [
+                  ["original", "Pôvodné"],
+                  ["leto", "☀️ Leto"],
+                  ["sneh", "❄️ Sneh"],
+                  ["vecer", "🌇 Večer"],
+                  ["starnutie", "⏳ O 15 rokov"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => applyVariant(key)}
+                  disabled={varying !== null}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-2 text-sm font-medium disabled:opacity-50 ${
+                    activeVariant === key
+                      ? "bg-neutral-900 text-white"
+                      : "border border-neutral-200 bg-white text-neutral-600"
+                  }`}
+                >
+                  {varying === key ? "Kreslím…" : label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button
             onClick={() => setPhase("masking")}
             className="mt-3 text-sm text-neutral-500 underline underline-offset-4"

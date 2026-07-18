@@ -106,13 +106,57 @@ export async function renderRoof(
     }),
   );
 
+  return imageFromResponse(response);
+}
+
+/** Vytáhne obrázek z odpovědi modelu, jinak srozumitelně spadne. */
+function imageFromResponse(response: {
+  candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string }; text?: string }> } }>;
+}): Buffer {
   const out = response.candidates?.[0]?.content?.parts ?? [];
   for (const part of out) {
     if (part.inlineData?.data) return Buffer.from(part.inlineData.data, "base64");
   }
-
   const text = out.map((p) => p.text).filter(Boolean).join(" ");
-  throw new Error(
-    `Model nevrátil obrázek.${text ? ` Odpověděl: ${text.slice(0, 300)}` : ""}`,
+  throw new Error(`Model nevrátil obrázek.${text ? ` Odpověděl: ${text.slice(0, 300)}` : ""}`);
+}
+
+/**
+ * Atmosférická varianta téhož domu: léto, sníh, večer, stárnutí.
+ *
+ * Na rozdíl od výměny krytiny tady MĚNÍME celý záběr (obloha, světlo, sníh),
+ * takže se nemaskuje — bereme celý výstup modelu. Dům, tvar střechy i materiál
+ * krytiny musí zůstat, mění se jen nálada. Tohle je ta věc, kterou si zákazník
+ * uloží do telefonu.
+ */
+export async function renderAtmosphere(
+  photo: Buffer,
+  mimeType: string,
+  atmospherePrompt: string,
+): Promise<Buffer> {
+  const ai = getClient();
+
+  const prompt = [
+    `Using this photo of a house, ${atmospherePrompt}`,
+    `Keep the house identical: same walls, windows, roof shape, roof covering`,
+    `material and colour, same composition, camera angle and framing.`,
+    `Only change the atmosphere, lighting, sky and season as described.`,
+    `Photorealistic result.`,
+  ].join(" ");
+
+  const response = await withRetry(() =>
+    ai.models.generateContent({
+      model: MODEL,
+      contents: [
+        { text: prompt },
+        { inlineData: { mimeType, data: photo.toString("base64") } },
+      ],
+      config: {
+        responseModalities: ["Image"],
+        imageConfig: { imageSize: IMAGE_SIZE },
+      },
+    }),
   );
+
+  return imageFromResponse(response);
 }

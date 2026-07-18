@@ -8,6 +8,10 @@ import { SECTIONS, type DetailField, type JobDetails } from "@/lib/crm/job-detai
  * sekce jsou sbalitelné. Commit na blur (u textu/čísel), ať se cloud záloha
  * nespouští po každém písmenu.
  */
+/** Zemité odstíny pozadí kartiček — stavba: dub, šalvia, piesok, hlina… Jemné,
+ *  ať text zůstane čitelný. Každá sekce dostane svůj. */
+const TINTS = ["#faf6ee", "#f2f6f1", "#f9f3ea", "#f4f5ef", "#f8f2e9", "#eef4f0", "#f7f3ea"];
+
 /** Hodnota do náhledu: bool → Áno, jinak text. */
 function fmt(v: string | number | boolean | null | undefined): string {
   if (v === true) return "Áno";
@@ -41,7 +45,7 @@ export default function DetailsForm({
       {/* Grid — kartičky vedle sebe; otevřená se roztiahne na celú šírku (rozbalí
           sa NA MIESTE, nepreskočí ako pri columns). */}
       <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
-        {SECTIONS.map((s) => {
+        {SECTIONS.map((s, si) => {
           const isOpen = open === s.title;
           const filled = s.fields.filter((f) => {
             const v = d[f.key];
@@ -58,7 +62,8 @@ export default function DetailsForm({
           return (
             <section
               key={s.title}
-              className={`group overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft transition hover:border-brand-300 ${
+              style={{ backgroundColor: TINTS[si % TINTS.length] }}
+              className={`group overflow-hidden rounded-2xl border border-black/5 shadow-soft transition hover:border-brand-300 ${
                 isOpen ? "sm:col-span-2" : ""
               }`}
             >
@@ -148,7 +153,7 @@ function FieldInput({
           type="date"
           value={typeof value === "string" ? value.slice(0, 10) : ""}
           onChange={(e) => onCommit(e.target.value || null)}
-          className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
+          className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-base outline-none focus:border-brand-500"
         />
       </label>
     );
@@ -191,7 +196,7 @@ function TextLike({
           onChange={(e) => setV(e.target.value)}
           onBlur={commit}
           rows={3}
-          className="w-full resize-none rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
+          className="w-full resize-none rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-base outline-none focus:border-brand-500"
         />
       ) : (
         <input
@@ -200,7 +205,7 @@ function TextLike({
           value={v}
           onChange={(e) => setV(e.target.value)}
           onBlur={commit}
-          className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
+          className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-base outline-none focus:border-brand-500"
         />
       )}
     </label>

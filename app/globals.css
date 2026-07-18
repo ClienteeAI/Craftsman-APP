@@ -36,8 +36,15 @@ html {
 }
 
 body {
-  background: var(--background);
   color: var(--foreground);
+  /* Jemný teplý gradient — náznak dřeva/zeme (dole) a zelene (hore) nad
+     tlmenou off-white. Fixed, aby sa pri scrollovaní nehýbal. Nie je to biele. */
+  background-color: var(--background);
+  background-image:
+    radial-gradient(900px 520px at 100% 0%, rgb(16 185 129 / 0.055), transparent 55%),
+    radial-gradient(1000px 640px at 0% 100%, rgb(193 161 118 / 0.10), transparent 58%),
+    radial-gradient(700px 500px at 50% 120%, rgb(180 150 110 / 0.06), transparent 60%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;

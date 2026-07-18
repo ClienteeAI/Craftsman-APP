@@ -25,9 +25,11 @@ type Status = {
 export default function JobOffer({
   shareUrl,
   priceExVat,
+  summary,
 }: {
   shareUrl: string;
   priceExVat: number | null;
+  summary?: string | null;
 }) {
   const id = shareUrl.split("/p/")[1] ?? null;
   const [st, setSt] = useState<Status | null>(null);
@@ -82,6 +84,11 @@ export default function JobOffer({
       <div className={`mt-3 inline-block rounded-full px-3 py-1.5 text-sm font-medium ${stage.cls}`}>
         {stage.label}
       </div>
+
+      {/* Popis zákazky — čo bolo v ponuke (strecha, plocha, krytina…). */}
+      {summary && summary.trim() && (
+        <p className="mt-3 text-sm leading-relaxed text-neutral-600">{summary}</p>
+      )}
 
       <a
         href={shareUrl}

@@ -145,7 +145,6 @@ export default function ZakazkaDetail() {
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <h1 className="text-3xl font-semibold tracking-tight">{job.customer.name ?? "Bez mena"}</h1>
-            {job.summary && <p className="mt-1 text-neutral-500">{job.summary}</p>}
             <div className="mt-3 flex flex-wrap gap-2">
               {(Object.keys(STATUS) as JobStatus[]).map((s) => (
                 <button
@@ -199,7 +198,9 @@ export default function ZakazkaDetail() {
             </section>
 
             {/* Odoslaná ponuka — jen když existuje. */}
-            {job.shareUrl && <JobOffer shareUrl={job.shareUrl} priceExVat={job.priceExVat} />}
+            {job.shareUrl && (
+              <JobOffer shareUrl={job.shareUrl} priceExVat={job.priceExVat} summary={job.summary} />
+            )}
 
             {/* Parametry zakázky — v levém sloupci, ať vyplní prostor pod kontaktem. */}
             <DetailsForm details={job.details} onChange={(details) => patch({ details })} />

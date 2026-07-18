@@ -612,6 +612,16 @@ const BADGE = {
  * zkontroluj a nedá jak. Majster přepíše dva řádky a jde od toho.
  * Přepočet je lokální, žádné kolečko na server: stojí na střeše.
  */
+/** Časté střešní doplňky pro upsell. Množství a cenu doplní majster. */
+const ACCESSORIES: { label: string; unit: string }[] = [
+  { label: "Snehové zábrany", unit: "bm" },
+  { label: "Odkvapový žľab", unit: "bm" },
+  { label: "Zvody (odpadové rúry)", unit: "ks" },
+  { label: "Poistná hydroizolačná fólia", unit: "m²" },
+  { label: "Vetrací pás hrebeňa", unit: "bm" },
+  { label: "Záveterná lišta", unit: "bm" },
+];
+
 function QuoteCard({
   quote,
   onChange,
@@ -649,6 +659,28 @@ function QuoteCard({
         kind,
       },
     ]);
+
+  // Upsell: časté doplňky na jeden ťuk. Vyšší košík bez diktovania. Množství
+  // a cenu doplní majster — nic si nevymýšlíme. Přidá se jen když tam ještě není.
+  const addAccessory = (label: string, unit: string) =>
+    setItems((prev) =>
+      prev.some((i) => i.label === label)
+        ? prev
+        : [
+            ...prev,
+            {
+              label,
+              qty: null,
+              unit,
+              unitPrice: null,
+              total: null,
+              confidence: "manual",
+              priceIsPlaceholder: true,
+              note: "Doplnok — doplň množstvo a cenu.",
+              kind: "material",
+            },
+          ],
+    );
 
   return (
     <section className="overflow-hidden rounded-2xl border border-neutral-200">
@@ -713,6 +745,21 @@ function QuoteCard({
               >
                 + pridať položku
               </button>
+
+              {/* Doplnky na jeden ťuk — jen u materiálu. Vyšší košík. */}
+              {kind === "material" && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {ACCESSORIES.filter((a) => !items.some((i) => i.label === a.label)).map((a) => (
+                    <button
+                      key={a.label}
+                      onClick={() => addAccessory(a.label, a.unit)}
+                      className="rounded-full border border-dashed border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-500 active:bg-neutral-100"
+                    >
+                      + {a.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}

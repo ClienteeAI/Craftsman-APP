@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { dueReminders, listJobs, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
+import { dueReminders, listJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
 import { winStats, type WinStats } from "@/lib/crm/stats";
 
 /**
@@ -19,10 +19,18 @@ export default function Zakazky() {
   const [filter, setFilter] = useState<JobStatus | "vsetky">("vsetky");
 
   useEffect(() => {
-    const j = listJobs();
-    setJobs(j);
-    setDue(dueReminders());
-    setStats(winStats(j));
+    // Nejdřív ukážeme lokální (okamžité), pak zkusíme obnovu z cloudu, když je
+    // zařízení prázdné (nový/vyměněný telefon) — a znovu vykreslíme.
+    function refresh() {
+      const j = listJobs();
+      setJobs(j);
+      setDue(dueReminders());
+      setStats(winStats(j));
+    }
+    refresh();
+    void restoreIfEmpty().then((restored) => {
+      if (restored.length > 0) refresh();
+    });
   }, []);
 
   const shown = filter === "vsetky" ? jobs : jobs.filter((j) => j.status === filter);

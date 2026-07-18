@@ -60,6 +60,54 @@ function write(jobs: Job[]): void {
   }
 }
 
+/**
+ * Záloha do cloudu (Supabase), fire-and-forget.
+ *
+ * localStorage je primární — tohle jen mimochodem pošle změnu na server jako
+ * zálohu. Když Supabase není nastavené, endpoint vrátí synced:false a nic se
+ * neděje. keepalive, ať request doletí i když majster hned zavře stránku.
+ * Nikdy nesmí shodit UI — proto všechno spolkne .catch().
+ */
+function backup(job: Job): void {
+  if (typeof window === "undefined") return;
+  fetch("/api/jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(job),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+function backupDelete(id: string): void {
+  if (typeof window === "undefined") return;
+  fetch(`/api/jobs/${id}`, { method: "DELETE", keepalive: true }).catch(() => {});
+}
+
+/**
+ * Obnova ze zálohy — jen když je zařízení prázdné.
+ *
+ * Scénář: majster přejde na nový telefon (nebo přeinstaluje appku). localStorage
+ * je prázdný, tak si stáhne zakázky z cloudu. Obnova JEN když je prázdno, ať
+ * se na aktivně používaném zařízení nepřepíšou lokální data ani nevrátí to, co
+ * majster mezitím smazal. Vrací aktuální seznam (obnovený nebo lokální).
+ */
+export async function restoreIfEmpty(): Promise<Job[]> {
+  const local = read();
+  if (local.length > 0) return local;
+  try {
+    const res = await fetch("/api/jobs", { cache: "no-store" });
+    if (!res.ok) return local;
+    const body = await res.json();
+    if (body.synced && Array.isArray(body.jobs) && body.jobs.length > 0) {
+      write(body.jobs as Job[]);
+      return body.jobs as Job[];
+    }
+  } catch {
+    // Bez signálu prostě zůstaneme u prázdna — zkusí se to při dalším načtení.
+  }
+  return local;
+}
+
 export function listJobs(): Job[] {
   // Novější nahoře, ale hotové a ztracené klesají dolů — majster řeší živé.
   return read().sort((a, b) => {
@@ -103,6 +151,7 @@ export function upsertJob(
       updatedAt: now,
     });
     write(jobs);
+    backup(existing);
     return existing;
   }
 
@@ -116,6 +165,7 @@ export function upsertJob(
     ...input,
   };
   write([job, ...jobs]);
+  backup(job);
   return job;
 }
 
@@ -147,6 +197,7 @@ export function createJob(input: {
     remindAt: null,
   };
   write([job, ...read()]);
+  backup(job);
   return job;
 }
 
@@ -156,11 +207,13 @@ export function updateJob(id: string, patch: Partial<Job>): Job | undefined {
   if (!job) return undefined;
   Object.assign(job, patch, { updatedAt: new Date().toISOString() });
   write(jobs);
+  backup(job);
   return job;
 }
 
 export function deleteJob(id: string): void {
   write(read().filter((j) => j.id !== id));
+  backupDelete(id);
 }
 
 /**

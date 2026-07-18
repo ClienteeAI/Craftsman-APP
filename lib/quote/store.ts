@@ -56,6 +56,14 @@ function newId(): string {
   return randomBytes(4).toString("hex");
 }
 
+/** Rozloží data URL na bajty + typ. Null když to není data URL. */
+function parseDataUrl(u: string): { bytes: Buffer; contentType: string } | null {
+  // [\s\S] místo flagu /s — ten vyžaduje novější JS target, který build nemá.
+  const m = /^data:([^;]+);base64,([\s\S]*)$/.exec(u);
+  if (!m) return null;
+  return { contentType: m[1], bytes: Buffer.from(m[2], "base64") };
+}
+
 /** DB řádek → SharedQuote. snake_case sloupce ↔ camelCase v appce. */
 function rowToQuote(r: Record<string, unknown>): SharedQuote {
   return {
@@ -91,6 +99,21 @@ export async function saveQuote(
 
   const db = getSupabase();
   if (db) {
+    // Render (velký data URL) nepatří do řádku — nahrajeme ho do storage bucketu
+    // 'renders' a do DB uložíme jen odkaz. Kdyby upload selhal, uložíme data URL
+    // inline (funguje dál, jen nafoukne řádek).
+    let imageRef = saved.imageDataUrl;
+    const parsed = imageRef?.startsWith("data:") ? parseDataUrl(imageRef) : null;
+    if (parsed) {
+      const { error: upErr } = await withDbRetry(() =>
+        db.storage.from("renders").upload(saved.id, parsed.bytes, {
+          contentType: parsed.contentType,
+          upsert: true,
+        }),
+      );
+      if (!upErr) imageRef = `storage:${saved.id}`;
+    }
+
     const { error } = await withDbRetry(() =>
       db.from("quotes").insert({
         id: saved.id,
@@ -105,7 +128,7 @@ export async function saveQuote(
         totals: saved.totals,
         range: saved.range,
         assumptions: saved.assumptions,
-        image_url: saved.imageDataUrl,
+        image_url: imageRef,
         video_id: saved.videoId,
       }),
     );
@@ -124,7 +147,15 @@ export async function getQuote(id: string): Promise<SharedQuote | undefined> {
       db.from("quotes").select("*").eq("id", id).maybeSingle(),
     );
     if (error) throw new Error(`Načítanie ponuky zlyhalo: ${error.message}`);
-    return data ? rowToQuote(data as Record<string, unknown>) : undefined;
+    if (!data) return undefined;
+    const quote = rowToQuote(data as Record<string, unknown>);
+    // Render ve storage → čerstvý podepsaný odkaz (stránka se rendruje per view).
+    if (quote.imageDataUrl?.startsWith("storage:")) {
+      const path = quote.imageDataUrl.slice("storage:".length);
+      const { data: signed } = await db.storage.from("renders").createSignedUrl(path, 3600);
+      quote.imageDataUrl = signed?.signedUrl ?? null;
+    }
+    return quote;
   }
   return mem.get(id);
 }

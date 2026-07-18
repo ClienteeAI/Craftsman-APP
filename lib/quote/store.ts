@@ -30,8 +30,12 @@ export type SharedQuote = {
   totals: { materialTotal: number; labourTotal: number; totalExVat: number; totalIncVat: number };
   range: { from: number; to: number };
   assumptions: string[];
-  /** Vizualizace zákazníkova baráku jako data URL. Bez ní je to jen tabulka. */
+  /** Vizualizace (render nové střechy). Vstup: data URL, výstup: podepsaný odkaz. */
   imageDataUrl: string | null;
+  /** Původní fotka baráku — pro posuvník před/po na zákaznické stránce. */
+  beforeImageUrl: string | null;
+  /** Atmosférické varianty (léto/sníh/večer/stárnutí), které majster vygeneroval. */
+  variants: { key: string; url: string }[];
   /** Id videa (leží v /api/video/[id]). Prázdné = žádné video. */
   videoId: string | null;
   /** Kdy si ji zákazník poprvé otevřel. Řemeslník pak ví, kdy volat. */
@@ -64,8 +68,36 @@ function parseDataUrl(u: string): { bytes: Buffer; contentType: string } | null 
   return { contentType: m[1], bytes: Buffer.from(m[2], "base64") };
 }
 
+type Db = NonNullable<ReturnType<typeof getSupabase>>;
+
+/**
+ * Nahraje data URL do storage bucketu 'renders' a vrátí odkaz `storage:<path>`.
+ * Když to není data URL nebo upload selže, vrátí původní hodnotu (funguje dál,
+ * jen inline). Null zůstane null.
+ */
+async function uploadImage(db: Db, path: string, dataUrl: string | null): Promise<string | null> {
+  if (!dataUrl?.startsWith("data:")) return dataUrl;
+  const parsed = parseDataUrl(dataUrl);
+  if (!parsed) return dataUrl;
+  const { error } = await withDbRetry(() =>
+    db.storage.from("renders").upload(path, parsed.bytes, {
+      contentType: parsed.contentType,
+      upsert: true,
+    }),
+  );
+  return error ? dataUrl : `storage:${path}`;
+}
+
+/** Odkaz `storage:<path>` → čerstvý podepsaný odkaz. Jinak vrátí beze změny. */
+async function resolveRef(db: Db, ref: string | null): Promise<string | null> {
+  if (!ref?.startsWith("storage:")) return ref;
+  const { data } = await db.storage.from("renders").createSignedUrl(ref.slice("storage:".length), 3600);
+  return data?.signedUrl ?? null;
+}
+
 /** DB řádek → SharedQuote. snake_case sloupce ↔ camelCase v appce. */
 function rowToQuote(r: Record<string, unknown>): SharedQuote {
+  const media = (r.media as { before?: string; variants?: Record<string, string> } | null) ?? {};
   return {
     id: r.id as string,
     createdAt: r.created_at as string,
@@ -80,6 +112,8 @@ function rowToQuote(r: Record<string, unknown>): SharedQuote {
     range: r.range as SharedQuote["range"],
     assumptions: (r.assumptions as string[]) ?? [],
     imageDataUrl: (r.image_url as string) ?? null,
+    beforeImageUrl: media.before ?? null,
+    variants: Object.entries(media.variants ?? {}).map(([key, url]) => ({ key, url })),
     videoId: (r.video_id as string) ?? null,
     openedAt: (r.opened_at as string) ?? null,
     interestedAt: (r.interested_at as string) ?? null,
@@ -100,20 +134,16 @@ export async function saveQuote(
 
   const db = getSupabase();
   if (db) {
-    // Render (velký data URL) nepatří do řádku — nahrajeme ho do storage bucketu
-    // 'renders' a do DB uložíme jen odkaz. Kdyby upload selhal, uložíme data URL
-    // inline (funguje dál, jen nafoukne řádek).
-    let imageRef = saved.imageDataUrl;
-    const parsed = imageRef?.startsWith("data:") ? parseDataUrl(imageRef) : null;
-    if (parsed) {
-      const { error: upErr } = await withDbRetry(() =>
-        db.storage.from("renders").upload(saved.id, parsed.bytes, {
-          contentType: parsed.contentType,
-          upsert: true,
-        }),
-      );
-      if (!upErr) imageRef = `storage:${saved.id}`;
+    // Velké obrázky (render, původní fotka, varianty) nepatří do řádku —
+    // nahrajeme je do storage a v DB necháme jen odkazy.
+    const imageRef = await uploadImage(db, saved.id, saved.imageDataUrl);
+    const beforeRef = await uploadImage(db, `${saved.id}-before`, saved.beforeImageUrl);
+    const variantsMedia: Record<string, string> = {};
+    for (const v of saved.variants) {
+      const ref = await uploadImage(db, `${saved.id}-${v.key}`, v.url);
+      if (ref) variantsMedia[v.key] = ref;
     }
+    const media = { before: beforeRef, variants: variantsMedia };
 
     const { error } = await withDbRetry(() =>
       db.from("quotes").insert({
@@ -131,6 +161,7 @@ export async function saveQuote(
         range: saved.range,
         assumptions: saved.assumptions,
         image_url: imageRef,
+        media,
         video_id: saved.videoId,
       }),
     );
@@ -151,12 +182,14 @@ export async function getQuote(id: string): Promise<SharedQuote | undefined> {
     if (error) throw new Error(`Načítanie ponuky zlyhalo: ${error.message}`);
     if (!data) return undefined;
     const quote = rowToQuote(data as Record<string, unknown>);
-    // Render ve storage → čerstvý podepsaný odkaz (stránka se rendruje per view).
-    if (quote.imageDataUrl?.startsWith("storage:")) {
-      const path = quote.imageDataUrl.slice("storage:".length);
-      const { data: signed } = await db.storage.from("renders").createSignedUrl(path, 3600);
-      quote.imageDataUrl = signed?.signedUrl ?? null;
-    }
+    // Obrázky ve storage → čerstvé podepsané odkazy (stránka se rendruje per view).
+    quote.imageDataUrl = await resolveRef(db, quote.imageDataUrl);
+    quote.beforeImageUrl = await resolveRef(db, quote.beforeImageUrl);
+    quote.variants = (
+      await Promise.all(
+        quote.variants.map(async (v) => ({ key: v.key, url: await resolveRef(db, v.url) })),
+      )
+    ).filter((v): v is { key: string; url: string } => v.url != null);
     return quote;
   }
   return mem.get(id);

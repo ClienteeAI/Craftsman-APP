@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getQuote, markOpened } from "@/lib/quote/store";
 import { notifyQuoteOwner } from "@/lib/push/send";
 import InterestButtons from "./interest-buttons";
+import OfferVisual from "./offer-visual";
 
 /**
  * Nabídka pro zákazníka. Odkaz místo PDF.
@@ -67,13 +68,13 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
           />
         )}
 
-        {/* Fotka jeho baráku. Tohle je ten rozdíl proti tabulce v PDF. */}
+        {/* Vizualizace jeho baráku — interaktivní: posuvník před/po + přepínač
+            atmosféry. Tohle je ten rozdíl proti tabulce v PDF. */}
         {q.imageDataUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={q.imageDataUrl}
-            alt="Vizualizácia vašej strechy"
-            className="mt-6 w-full rounded-2xl border border-neutral-200"
+          <OfferVisual
+            before={q.beforeImageUrl}
+            afterDefault={q.imageDataUrl}
+            variants={q.variants}
           />
         )}
 

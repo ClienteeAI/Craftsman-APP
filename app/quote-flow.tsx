@@ -42,6 +42,12 @@ export default function QuoteFlow({ company }: { company: string }) {
     email: null,
   });
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  // Galerie pro zákazníka: původní fotka + vygenerované varianty (posuvník
+  // před/po a přepínač atmosféry na zákaznické stránce).
+  const [gallery, setGallery] = useState<{
+    before: string | null;
+    variants: { key: string; url: string }[];
+  }>({ before: null, variants: [] });
   const [videoId, setVideoId] = useState<string | null>(null);
   // Když nabídka vznikla z existujícího kontaktu (/?zakazka=id), držíme si jeho
   // id + jméno. Id, aby se hotová nabídka přilepila na TU kartu (a ne založila
@@ -232,6 +238,8 @@ export default function QuoteFlow({ company }: { company: string }) {
           range: live.totals.range,
           assumptions: active.quote.assumptions,
           imageDataUrl,
+          beforeImageUrl: gallery.before,
+          variants: gallery.variants,
           videoId,
         }),
       });
@@ -457,6 +465,7 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
                 productId={active.product.id}
                 productName={active.product.model}
                 onRendered={setImageDataUrl}
+                onGallery={setGallery}
                 initialPhoto={mailPhotos[0] ?? null}
               />
             )}

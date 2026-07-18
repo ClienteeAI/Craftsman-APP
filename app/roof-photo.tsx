@@ -15,12 +15,16 @@ export default function RoofPhoto({
   productId,
   productName,
   onRendered,
+  onGallery,
   initialPhoto,
 }: {
   productId: string;
   productName: string;
-  /** Hotový render putuje nahoru — nabídka pro zákazníka ho potřebuje. */
+  /** Základní render (after) putuje nahoru — je to hlavní obrázek nabídky. */
   onRendered?: (dataUrl: string | null) => void;
+  /** Galerie pro zákazníka: původní fotka (before) + vygenerované varianty.
+      Díky ní má zákazník na nabídce posuvník před/po a přepínač atmosféry. */
+  onGallery?: (g: { before: string | null; variants: { key: string; url: string }[] }) => void;
   /** Fotka z mailu — natáhne se sem, ať ji majster nemusí nahrávat znova. */
   initialPhoto?: File | null;
 }) {
@@ -33,6 +37,8 @@ export default function RoofPhoto({
   // zvlášť, ať jde přepínat tam a zpět; hotové varianty cachujeme.
   const baseResult = useRef<{ objUrl: string; dataUrl: string } | null>(null);
   const variantCache = useRef<Map<string, { objUrl: string; dataUrl: string }>>(new Map());
+  /** Původní fotka jako data URL — „before" do galerie pro zákazníka. */
+  const beforeDataUrl = useRef<string | null>(null);
   const [activeVariant, setActiveVariant] = useState<string>("original");
   const [varying, setVarying] = useState<string | null>(null);
   const [brush, setBrush] = useState(44);
@@ -110,6 +116,16 @@ export default function RoofPhoto({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPhoto]);
 
+  /** Pošle nahoru galerii pro zákazníka: before + všechny vygenerované varianty. */
+  function emitGallery() {
+    if (!onGallery) return;
+    const variants = Array.from(variantCache.current.entries()).map(([key, v]) => ({
+      key,
+      url: v.dataUrl,
+    }));
+    onGallery({ before: beforeDataUrl.current, variants });
+  }
+
   async function render() {
     const c = canvasRef.current;
     if (!photoFile || !c) return;
@@ -139,8 +155,16 @@ export default function RoofPhoto({
         const dataUrl = String(reader.result);
         baseResult.current = { objUrl, dataUrl };
         onRendered?.(dataUrl);
+        emitGallery(); // varianty jsou po novém renderu prázdné, ale before pošleme
       };
       reader.readAsDataURL(blob);
+      // Původní fotka jako data URL — „before" do galerie.
+      const beforeReader = new FileReader();
+      beforeReader.onload = () => {
+        beforeDataUrl.current = String(beforeReader.result);
+        emitGallery();
+      };
+      beforeReader.readAsDataURL(photoFile);
       renderedFor.current = productId;
       setSplit(50);
       setPhase("done");
@@ -192,7 +216,8 @@ export default function RoofPhoto({
         variantCache.current.set(key, { objUrl, dataUrl });
         setResultUrl(objUrl);
         setActiveVariant(key);
-        onRendered?.(dataUrl);
+        onRendered?.(dataUrl); // hlavní obrázek nabídky = aktuální výběr majstra
+        emitGallery(); // a varianta se přidá do galerie pro zákazníka
       };
       reader.readAsDataURL(blob);
     } catch (e) {

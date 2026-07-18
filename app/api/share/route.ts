@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
         range: body.range,
         assumptions: body.assumptions ?? [],
         imageDataUrl: body.imageDataUrl ?? null,
+        beforeImageUrl: body.beforeImageUrl ?? null,
+        variants: Array.isArray(body.variants) ? body.variants : [],
         videoId: body.videoId ?? null,
       },
       userId,

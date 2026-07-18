@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { deleteJob, getJob, STATUS, updateJob, type Job, type JobStatus } from "@/lib/crm/jobs";
 import MarketingSection from "./marketing-section";
 import JobOffer from "./job-offer";
+import DetailsForm from "./details-form";
 
 /**
  * Karta zákazníka — detail zakázky.
@@ -159,6 +160,9 @@ export default function ZakazkaDetail() {
             </p>
           </section>
         )}
+
+        {/* Obsáhlé parametry zakázky — fakturace, technická střecha, prostupy… */}
+        <DetailsForm details={job.details} onChange={(details) => patch({ details })} />
 
         {/* Termín realizace — kdy začneme pracovat (jiné než připomenutí zavolat). */}
         <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">

@@ -9,6 +9,7 @@ import type { RoofProduct } from "@/lib/quote/products";
 import type { TierId, TieredQuote } from "@/lib/quote/tiers";
 import { checkQuote, type CheckFinding } from "@/lib/quote/check";
 import { getJob, upsertJob } from "@/lib/crm/jobs";
+import type { JobDetails } from "@/lib/crm/job-details";
 import { loadProfile } from "@/lib/quote/profile-store";
 import { recomputeTotals, repriceItem } from "@/lib/quote/totals";
 import { deleteTemplate, listTemplates, saveTemplate, type Template } from "@/lib/quote/templates";
@@ -267,6 +268,32 @@ export default function QuoteFlow({ company }: { company: string }) {
 
       // Zakázka spadne do CRM. Tady se z jednorázové nabídky stává vedená
       // zakázka — od téhle chvíle ji majster má v seznamu a může ji sledovat.
+      // Technické parametry z nadiktované nabídky → předvyplní se do CRM,
+      // ať je majster nemusí psát dvakrát (v detailu se dají doladit).
+      const rj = result?.job;
+      const details: JobDetails = {};
+      const set = (k: string, v: string | number | null | undefined) => {
+        if (v != null && v !== "") details[k] = v;
+      };
+      if (rj) {
+        set("roofType", rj.roof.type);
+        set("pitchDeg", rj.roof.pitchDeg);
+        set("areaM2", rj.roof.areaM2);
+        set("lengthM", rj.roof.lengthM);
+        set("widthM", rj.roof.widthM);
+        set("chimneys", rj.penetrations.chimneys);
+        set("skylights", rj.penetrations.skylights);
+        set(
+          "productName",
+          active
+            ? `${active.product.brand} ${active.product.model}`
+            : rj.product.brand
+              ? `${rj.product.brand} ${rj.product.model ?? ""}`.trim()
+              : null,
+        );
+        set("colour", rj.product.colour);
+      }
+
       upsertJob({
         // id → nabídka se přilepí na existující kartu kontaktu, ne založí druhou.
         ...(linkedJobId ? { id: linkedJobId } : {}),
@@ -275,6 +302,7 @@ export default function QuoteFlow({ company }: { company: string }) {
         priceExVat: live.totals.totalExVat,
         shareUrl: body.url,
         status: "ponuka",
+        details,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Nepodarilo sa vytvoriť odkaz.");

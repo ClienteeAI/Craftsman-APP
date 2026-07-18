@@ -15,6 +15,8 @@
  * to půjde vidět z víc zařízení. Teď je zakázka vázaná na jeden telefon.
  */
 
+import type { JobDetails } from "./job-details";
+
 export type JobStatus = "novy" | "ponuka" | "realizacia" | "hotovo" | "straceny";
 
 export const STATUS: Record<JobStatus, { label: string; dot: string; order: number }> = {
@@ -41,6 +43,8 @@ export type Job = {
   remindAt: string | null;
   /** Termín realizace — kdy se má začít pracovat. ISO datum. */
   startAt: string | null;
+  /** Obsáhlé parametry zakázky (fakturace, technická střecha, prostupy…). */
+  details: JobDetails | null;
 };
 
 const KEY = "zakazky-v1";
@@ -133,8 +137,11 @@ function shortId(): string {
  * kontakty v seznamu.
  */
 export function upsertJob(
-  input: Omit<Job, "id" | "createdAt" | "updatedAt" | "status" | "note" | "remindAt" | "startAt"> &
-    Partial<Pick<Job, "status" | "id">>,
+  input: Omit<
+    Job,
+    "id" | "createdAt" | "updatedAt" | "status" | "note" | "remindAt" | "startAt" | "details"
+  > &
+    Partial<Pick<Job, "status" | "id" | "details">>,
 ): Job {
   const jobs = read();
   const now = new Date().toISOString();
@@ -147,8 +154,14 @@ export function upsertJob(
   const existing = existingById ?? existingByPhone;
 
   if (existing) {
+    // details MERGUJEME, ne přepisujeme — ať předvyplnění z nabídky nesmaže
+    // ruční pole (fakturace, logistika…), co majster zadal v detailu.
+    const mergedDetails = input.details
+      ? { ...(existing.details ?? {}), ...input.details }
+      : existing.details;
     Object.assign(existing, {
       ...input,
+      details: mergedDetails,
       status: input.status ?? existing.status,
       updatedAt: now,
     });
@@ -165,6 +178,7 @@ export function upsertJob(
     note: null,
     remindAt: null,
     startAt: null,
+    details: null,
     ...input,
   };
   write([job, ...jobs]);
@@ -199,6 +213,7 @@ export function createJob(input: {
     note: input.note ?? null,
     remindAt: null,
     startAt: null,
+    details: null,
   };
   write([job, ...read()]);
   backup(job);

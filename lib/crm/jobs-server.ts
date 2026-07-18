@@ -31,6 +31,7 @@ function rowToJob(r: Record<string, unknown>): Job {
     note: (r.note as string) ?? null,
     remindAt: (r.remind_at as string) ?? null,
     startAt: (r.start_at as string) ?? null,
+    details: (r.details as Job["details"]) ?? null,
   };
 }
 
@@ -57,6 +58,7 @@ export async function upsertJobServer(job: Job, userId: string): Promise<void> {
     note: job.note,
     remind_at: job.remindAt,
     start_at: job.startAt,
+    details: job.details,
   });
   if (error) throw new Error(`Záloha zákazky zlyhala: ${error.message}`);
 }

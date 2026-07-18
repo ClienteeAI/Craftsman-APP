@@ -18,10 +18,6 @@ import { getSupabase } from "@/lib/supabase";
  * jede čistě z localStorage.
  */
 
-// Bez přihlášení je vše jeden majster = jeden Supabase projekt (jeho model
-// "jeden projekt na klienta"). Multi-tenant přijde s auth.
-const TENANT = "default";
-
 function rowToJob(r: Record<string, unknown>): Job {
   return {
     id: r.id as string,
@@ -42,13 +38,13 @@ export function crmSyncEnabled(): boolean {
   return getSupabase() !== null;
 }
 
-/** Zálohuje jednu zakázku (upsert podle id). */
-export async function upsertJobServer(job: Job): Promise<void> {
+/** Zálohuje jednu zakázku (upsert podle id) pod daného řemeslníka. */
+export async function upsertJobServer(job: Job, userId: string): Promise<void> {
   const db = getSupabase();
   if (!db) return;
   const { error } = await db.from("jobs").upsert({
     id: job.id,
-    tenant: TENANT,
+    user_id: userId,
     created_at: job.createdAt,
     updated_at: job.updatedAt,
     status: job.status,
@@ -63,22 +59,22 @@ export async function upsertJobServer(job: Job): Promise<void> {
   if (error) throw new Error(`Záloha zákazky zlyhala: ${error.message}`);
 }
 
-/** Smaže zálohu zakázky, ať se po obnově nevrátí. */
-export async function deleteJobServer(id: string): Promise<void> {
+/** Smaže zálohu zakázky (jen vlastní), ať se po obnově nevrátí. */
+export async function deleteJobServer(id: string, userId: string): Promise<void> {
   const db = getSupabase();
   if (!db) return;
-  const { error } = await db.from("jobs").delete().eq("tenant", TENANT).eq("id", id);
+  const { error } = await db.from("jobs").delete().eq("user_id", userId).eq("id", id);
   if (error) throw new Error(`Zmazanie zálohy zlyhalo: ${error.message}`);
 }
 
-/** Všechny zakázky ze zálohy (pro obnovu na novém zařízení). */
-export async function listJobsServer(): Promise<Job[]> {
+/** Všechny zakázky řemeslníka ze zálohy (pro obnovu na novém zařízení). */
+export async function listJobsServer(userId: string): Promise<Job[]> {
   const db = getSupabase();
   if (!db) return [];
   const { data, error } = await db
     .from("jobs")
     .select("*")
-    .eq("tenant", TENANT)
+    .eq("user_id", userId)
     .order("updated_at", { ascending: false });
   if (error) throw new Error(`Načítanie zálohy zlyhalo: ${error.message}`);
   return (data ?? []).map(rowToJob);

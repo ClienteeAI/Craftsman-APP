@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveQuote } from "@/lib/quote/store";
+import { currentUserId } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -12,20 +13,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ponuka je prázdna." }, { status: 400 });
     }
 
-    const saved = await saveQuote({
-      company: body.company,
-      customer: body.customer ?? { name: null, obec: null, phone: null, email: null },
-      summary: String(body.summary ?? ""),
-      tierName: String(body.tierName ?? ""),
-      productName: String(body.productName ?? ""),
-      earliestTerm: String(body.earliestTerm ?? ""),
-      items: body.items,
-      totals: body.totals,
-      range: body.range,
-      assumptions: body.assumptions ?? [],
-      imageDataUrl: body.imageDataUrl ?? null,
-      videoId: body.videoId ?? null,
-    });
+    const userId = await currentUserId();
+    const saved = await saveQuote(
+      {
+        company: body.company,
+        customer: body.customer ?? { name: null, obec: null, phone: null, email: null },
+        summary: String(body.summary ?? ""),
+        tierName: String(body.tierName ?? ""),
+        productName: String(body.productName ?? ""),
+        earliestTerm: String(body.earliestTerm ?? ""),
+        items: body.items,
+        totals: body.totals,
+        range: body.range,
+        assumptions: body.assumptions ?? [],
+        imageDataUrl: body.imageDataUrl ?? null,
+        videoId: body.videoId ?? null,
+      },
+      userId,
+    );
 
     const origin = req.headers.get("origin") ?? new URL(req.url).origin;
     return NextResponse.json({ id: saved.id, url: `${origin}/p/${saved.id}` });

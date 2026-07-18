@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProfileServer, profileSyncEnabled, upsertProfileServer } from "@/lib/quote/profile-server";
+import { currentUserId } from "@/lib/supabase/server";
 import type { CraftsmanProfile } from "@/lib/quote/profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** Obnova profilu ze zálohy (nové/vyměněné zařízení). */
+/** Obnova profilu přihlášeného řemeslníka. */
 export async function GET() {
   if (!profileSyncEnabled()) {
     return NextResponse.json({ synced: false, profile: null }, { headers: { "Cache-Control": "no-store" } });
   }
+  const userId = await currentUserId();
+  if (!userId) return NextResponse.json({ synced: false, profile: null }, { status: 401 });
   try {
-    const profile = await getProfileServer();
+    const profile = await getProfileServer(userId);
     return NextResponse.json({ synced: true, profile }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error("[profile GET]", err);
@@ -19,12 +22,14 @@ export async function GET() {
   }
 }
 
-/** Záloha profilu (upsert). Fire-and-forget z klienta při uložení nastavení. */
+/** Záloha profilu (upsert) pod přihlášeného řemeslníka. */
 export async function POST(req: NextRequest) {
   if (!profileSyncEnabled()) return NextResponse.json({ synced: false });
+  const userId = await currentUserId();
+  if (!userId) return NextResponse.json({ synced: false }, { status: 401 });
   try {
     const profile = (await req.json()) as CraftsmanProfile;
-    await upsertProfileServer(profile);
+    await upsertProfileServer(profile, userId);
     return NextResponse.json({ synced: true });
   } catch (err) {
     console.error("[profile POST]", err);

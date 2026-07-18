@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DEFAULT_PROFILE, type CraftsmanProfile } from "@/lib/quote/profile";
 import { loadProfile, restoreProfileIfMissing, saveProfile } from "@/lib/quote/profile-store";
+import { authConfigured, createClient } from "@/lib/supabase/browser";
 
 /**
  * Profil realizátora — ze zadání klienta:
@@ -17,8 +19,10 @@ export default function Profil() {
   // Vycházíme z výchozích hodnot, ne z null. Kdyby se čekalo na useEffect,
   // vyrenderuje server prázdno a majster kouká na bílou obrazovku, než se
   // appka zhydratuje. Uložené hodnoty se dosadí hned potom.
+  const router = useRouter();
   const [p, setP] = useState<CraftsmanProfile>(DEFAULT_PROFILE);
   const [saved, setSaved] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
     setP(loadProfile());
@@ -26,7 +30,17 @@ export default function Profil() {
     void restoreProfileIfMissing().then((restored) => {
       if (restored) setP(loadProfile());
     });
+    // Kdo je přihlášený (ať má u odhlášení vidět svůj mail).
+    const supabase = createClient();
+    if (supabase) void supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
   }, []);
+
+  async function signOut() {
+    const supabase = createClient();
+    await supabase?.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
 
   function update(patch: Partial<CraftsmanProfile>) {
     setP((prev) => ({ ...prev, ...patch }));
@@ -85,6 +99,18 @@ export default function Profil() {
             onChange={(v) => update({ earliestTerm: v })}
           />
         </Section>
+
+        {authConfigured() && (
+          <Section title="Účet">
+            {email && <p className="-mt-1 mb-2 text-sm text-neutral-500">Prihlásený ako {email}</p>}
+            <button
+              onClick={signOut}
+              className="rounded-xl border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-600 active:bg-neutral-100"
+            >
+              Odhlásiť sa
+            </button>
+          </Section>
+        )}
       </div>
 
       {/* Uložit musí být pod palcem, ne na konci dlouhé stránky. */}

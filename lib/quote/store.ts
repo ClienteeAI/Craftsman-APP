@@ -88,6 +88,7 @@ function rowToQuote(r: Record<string, unknown>): SharedQuote {
 
 export async function saveQuote(
   q: Omit<SharedQuote, "id" | "createdAt" | "openedAt" | "interestedAt">,
+  userId: string | null = null,
 ): Promise<SharedQuote> {
   const saved: SharedQuote = {
     ...q,
@@ -117,6 +118,7 @@ export async function saveQuote(
     const { error } = await withDbRetry(() =>
       db.from("quotes").insert({
         id: saved.id,
+        user_id: userId,
         created_at: saved.createdAt,
         company: saved.company,
         customer: saved.customer,

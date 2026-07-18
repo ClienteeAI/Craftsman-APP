@@ -11,18 +11,16 @@ import { getSupabase, withDbRetry } from "@/lib/supabase";
  * Bez Supabase jsou funkce no-op a jede se čistě z localStorage.
  */
 
-const TENANT = "default";
-
 export function profileSyncEnabled(): boolean {
   return getSupabase() !== null;
 }
 
-export async function upsertProfileServer(profile: CraftsmanProfile): Promise<void> {
+export async function upsertProfileServer(profile: CraftsmanProfile, userId: string): Promise<void> {
   const db = getSupabase();
   if (!db) return;
   const { error } = await withDbRetry(() =>
     db.from("profiles").upsert({
-      tenant: TENANT,
+      user_id: userId,
       data: profile,
       updated_at: new Date().toISOString(),
     }),
@@ -30,11 +28,11 @@ export async function upsertProfileServer(profile: CraftsmanProfile): Promise<vo
   if (error) throw new Error(`Záloha profilu zlyhala: ${error.message}`);
 }
 
-export async function getProfileServer(): Promise<CraftsmanProfile | null> {
+export async function getProfileServer(userId: string): Promise<CraftsmanProfile | null> {
   const db = getSupabase();
   if (!db) return null;
   const { data, error } = await withDbRetry(() =>
-    db.from("profiles").select("data").eq("tenant", TENANT).maybeSingle(),
+    db.from("profiles").select("data").eq("user_id", userId).maybeSingle(),
   );
   if (error) throw new Error(`Načítanie profilu zlyhalo: ${error.message}`);
   return (data?.data as CraftsmanProfile) ?? null;

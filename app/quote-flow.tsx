@@ -16,6 +16,7 @@ import RoofPhoto from "./roof-photo";
 import VideoMessage from "./video-message";
 import ShoppingList from "./shopping-list";
 import WorkOrder from "./work-order";
+import SolarEstimate from "./solar-estimate";
 
 type Result = Extraction & { tiers: TieredQuote[]; product: RoofProduct | null };
 type Phase = "idle" | "recording" | "transcribing" | "thinking" | "done" | "error";
@@ -511,6 +512,18 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
                 warnings={active.quote.assumptions}
               />
             )}
+
+            {/* Solár — kolik by střecha vyrobila (upsell + wow). */}
+            <SolarEstimate
+              obec={customer.obec ?? result.job.customer.obec}
+              areaM2={
+                result.job.roof.areaM2 ??
+                (result.job.roof.lengthM && result.job.roof.widthM
+                  ? result.job.roof.lengthM * result.job.roof.widthM
+                  : null)
+              }
+              pitchDeg={result.job.roof.pitchDeg}
+            />
 
             <VideoMessage
               onReady={(id) => {

@@ -92,17 +92,17 @@ export default function Kalendar() {
             <h1 className="text-xl font-semibold tracking-tight">Kalendár realizácií</h1>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={today} className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium shadow-soft transition hover:bg-neutral-50">
+            <button onClick={today} className="rounded-lg border border-neutral-200 bg-card px-3 py-1.5 text-sm font-medium shadow-soft transition hover:bg-neutral-50">
               Dnes
             </button>
             <div className="flex items-center gap-1">
-              <button onClick={() => shift(-1)} aria-label="Predošlý mesiac" className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-white shadow-soft transition hover:bg-neutral-50">
+              <button onClick={() => shift(-1)} aria-label="Predošlý mesiac" className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-card shadow-soft transition hover:bg-neutral-50">
                 ‹
               </button>
               <span className="w-40 text-center text-sm font-semibold">
                 {MONTHS[m]} {y}
               </span>
-              <button onClick={() => shift(1)} aria-label="Ďalší mesiac" className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-white shadow-soft transition hover:bg-neutral-50">
+              <button onClick={() => shift(1)} aria-label="Ďalší mesiac" className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 bg-card shadow-soft transition hover:bg-neutral-50">
                 ›
               </button>
             </div>
@@ -111,7 +111,7 @@ export default function Kalendar() {
 
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_18rem]">
           {/* Mřížka měsíce */}
-          <section className="overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft">
+          <section className="overflow-hidden rounded-2xl border border-neutral-200/70 bg-card shadow-soft">
             <div className="grid grid-cols-7 border-b border-neutral-100 text-center text-xs font-medium uppercase tracking-wider text-neutral-400">
               {WEEKDAYS.map((w) => (
                 <div key={w} className="py-2.5">{w}</div>
@@ -160,7 +160,7 @@ export default function Kalendar() {
 
           {/* Nadchádzajúce */}
           <aside className="space-y-4">
-            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+            <section className="rounded-2xl border border-neutral-200/70 bg-card p-5 shadow-soft">
               <h2 className="text-sm font-semibold">Nadchádzajúce realizácie</h2>
               {upcoming.length === 0 ? (
                 <p className="mt-3 text-sm text-neutral-400">

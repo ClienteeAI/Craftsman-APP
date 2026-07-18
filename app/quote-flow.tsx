@@ -328,21 +328,21 @@ export default function QuoteFlow({ company }: { company: string }) {
             <Link
               href="/prehlad"
               aria-label="Prehľad"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-card hover:text-neutral-900 hover:shadow-soft"
             >
               <GridIcon />
             </Link>
             <Link
               href="/zakazky"
               aria-label="Zákazky"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-card hover:text-neutral-900 hover:shadow-soft"
             >
               <ListIcon />
             </Link>
             <Link
               href="/profil"
               aria-label="Moja firma"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-card hover:text-neutral-900 hover:shadow-soft"
             >
               <GearIcon />
             </Link>
@@ -623,7 +623,7 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
 function Card({ title, children, accent }: { title: string; children: React.ReactNode; accent?: boolean }) {
   return (
     <section
-      className={`rounded-2xl border p-5 ${accent ? "border-brand-200 bg-brand-50" : "border-neutral-200/70 bg-white shadow-soft"}`}
+      className={`rounded-2xl border p-5 ${accent ? "border-brand-200 bg-brand-50" : "border-neutral-200/70 bg-card shadow-soft"}`}
     >
       <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">{title}</h2>
       <div className="mt-3">{children}</div>

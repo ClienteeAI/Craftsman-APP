@@ -41,7 +41,7 @@ export default function NovyKontakt() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900">
+    <main className="min-h-screen text-neutral-900">
       <div className="mx-auto max-w-2xl px-5 py-8 pb-28">
         <Link href="/zakazky" className="text-sm text-neutral-500 underline underline-offset-4">
           ← Späť na zákazky
@@ -52,7 +52,7 @@ export default function NovyKontakt() {
           Zapíš si zákazníka do zoznamu. Ponuku môžeš dorobiť neskôr.
         </p>
 
-        <section className="mt-6 space-y-4 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
+        <section className="mt-6 space-y-4 rounded-2xl border border-neutral-200/70 bg-card shadow-soft p-5">
           <Field label="Meno">
             <input
               value={name}

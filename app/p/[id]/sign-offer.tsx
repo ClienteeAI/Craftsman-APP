@@ -96,7 +96,7 @@ export default function SignOffer({
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
+    <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-card shadow-soft p-5">
       {!open ? (
         <>
           <p className="text-[15px] font-medium">Chcete to záväzne objednať?</p>

@@ -57,7 +57,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
   const duration = estimateDuration(q.items);
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900">
+    <main className="min-h-screen text-neutral-900">
       <div className="mx-auto max-w-2xl px-5 py-8 pb-28">
         {/* Hlavička z profilu realizátora — jeho logo, jeho firma. */}
         <header className="flex items-center gap-3">
@@ -103,7 +103,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
           <>
             <TierVote id={q.id} tiers={q.tiers} initialChosen={q.chosenTier} />
             {q.earliestTerm && (
-              <div className="mt-4 flex items-center gap-2 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
+              <div className="mt-4 flex items-center gap-2 rounded-2xl border border-neutral-200/70 bg-card shadow-soft p-5">
                 <span className="text-neutral-400">📅</span>
                 <span className="text-[15px]">
                   Najbližší voľný termín: <span className="font-medium">{q.earliestTerm}</span>
@@ -112,7 +112,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
             )}
           </>
         ) : (
-          <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-6">
+          <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-card shadow-soft p-6">
             <p className="text-xs uppercase tracking-widest text-neutral-400">Orientačná cena</p>
             <p className="mt-1 text-4xl font-semibold tracking-tight">
               {eur(q.range.from)} – {eur(q.range.to)}
@@ -137,7 +137,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
 
         {/* Odhad dĺžky realizácie — zákazník chce vedieť, „ako dlho to bude trvať". */}
         {duration && (
-          <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+          <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-neutral-200/70 bg-card p-5 shadow-soft">
             <span className="text-neutral-400">⏱️</span>
             <span className="text-[15px]">
               Realizácia trvá <span className="font-medium">{duration}</span>{" "}
@@ -146,7 +146,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
           </div>
         )}
 
-        <section className="mt-4 overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft">
+        <section className="mt-4 overflow-hidden rounded-2xl border border-neutral-200/70 bg-card shadow-soft">
           <div className="border-b border-neutral-100 p-5">
             <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
               Čo je v cene

@@ -40,7 +40,7 @@ export default function Zakazky() {
   const live = jobs.filter((j) => j.status !== "hotovo" && j.status !== "straceny").length;
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900">
+    <main className="min-h-screen text-neutral-900">
       <div className="mx-auto max-w-2xl px-5 py-8 pb-28">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -53,7 +53,7 @@ export default function Zakazky() {
             <Link
               href="/prehlad"
               aria-label="Prehľad"
-              className="flex h-11 w-11 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-card hover:text-neutral-900 hover:shadow-soft"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <rect x="3" y="3" width="7" height="7" rx="1.5" />
@@ -65,7 +65,7 @@ export default function Zakazky() {
             <Link
               href="/profil"
               aria-label="Moja firma"
-              className="-mr-2 flex h-11 w-11 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
+              className="-mr-2 flex h-11 w-11 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-card hover:text-neutral-900 hover:shadow-soft"
             >
               <GearIcon />
             </Link>
@@ -182,7 +182,7 @@ function JobCard({ job }: { job: Job }) {
   return (
     <Link
       href={`/zakazky/${job.id}`}
-      className="block rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-4 active:bg-neutral-50"
+      className="block rounded-2xl border border-neutral-200/70 bg-card shadow-soft p-4 active:bg-neutral-50"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -278,7 +278,7 @@ function StatsStrip({ s }: { s: WinStats }) {
   const enough = s.closed >= 5;
 
   return (
-    <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
+    <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-card shadow-soft p-5">
       <div className="flex items-baseline justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Tvoja úspešnosť</h2>
         <span className="text-sm text-neutral-400">{s.closed} uzavretých</span>

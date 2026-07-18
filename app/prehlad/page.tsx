@@ -83,7 +83,7 @@ export default function Dashboard() {
             <span className="hidden text-sm font-semibold sm:block">Rýchla ponuka</span>
           </div>
 
-          <nav className="flex items-center gap-1 rounded-full border border-neutral-200/70 bg-white p-1 shadow-soft">
+          <nav className="flex items-center gap-1 rounded-full border border-neutral-200/70 bg-card p-1 shadow-soft">
             <span className="rounded-full bg-neutral-900 px-4 py-1.5 text-sm font-medium text-white">Prehľad</span>
             <Link href="/" className="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-900">
               Nová ponuka
@@ -102,7 +102,7 @@ export default function Dashboard() {
           <Link
             href="/profil"
             aria-label="Moja firma"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-card hover:text-neutral-900 hover:shadow-soft"
           >
             <GearIcon />
           </Link>
@@ -130,7 +130,7 @@ export default function Dashboard() {
           {/* Levý sloupec (2/3) */}
           <div className="space-y-4 lg:col-span-2">
             {/* Graf tržeb */}
-            <section className="rounded-2xl border border-neutral-200/70 bg-white p-6 shadow-soft">
+            <section className="rounded-2xl border border-neutral-200/70 bg-card p-6 shadow-soft">
               <div className="flex items-baseline justify-between">
                 <h2 className="text-sm font-semibold">Tržby v čase</h2>
                 <span className="text-xs text-neutral-400">posledných 6 mesiacov</span>
@@ -152,7 +152,7 @@ export default function Dashboard() {
             </section>
 
             {/* Tabulka zakázek */}
-            <section className="overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft">
+            <section className="overflow-hidden rounded-2xl border border-neutral-200/70 bg-card shadow-soft">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-100 p-5">
                 <h2 className="text-sm font-semibold">Zákazky</h2>
                 <div className="flex flex-wrap gap-1">
@@ -206,7 +206,7 @@ export default function Dashboard() {
           {/* Pravý sloupec (1/3) */}
           <div className="space-y-4">
             {/* Na dnes — akční */}
-            <section className="rounded-2xl border border-neutral-200/70 bg-white p-6 shadow-soft">
+            <section className="rounded-2xl border border-neutral-200/70 bg-card p-6 shadow-soft">
               <div className="flex items-baseline justify-between">
                 <h2 className="text-sm font-semibold">Na dnes</h2>
                 <Link href="/zakazky" className="text-xs font-medium text-brand-700 hover:underline">
@@ -240,7 +240,7 @@ export default function Dashboard() {
             </section>
 
             {/* Rýchle akcie */}
-            <section className="rounded-2xl border border-neutral-200/70 bg-white p-6 shadow-soft">
+            <section className="rounded-2xl border border-neutral-200/70 bg-card p-6 shadow-soft">
               <h2 className="text-sm font-semibold">Rýchle akcie</h2>
               <div className="mt-4 space-y-2">
                 <Link
@@ -299,7 +299,7 @@ function Kpi({
       </p>
     </>
   );
-  const cls = "block rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft";
+  const cls = "block rounded-2xl border border-neutral-200/70 bg-card p-5 shadow-soft";
   return href ? (
     <Link href={href} className={`${cls} transition hover:border-brand-300 hover:shadow-lift`}>
       {inner}

@@ -75,7 +75,7 @@ export default function ZakazkaDetail() {
 
   if (notFound) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-neutral-50">
+      <main className="flex min-h-screen items-center justify-center">
         <div className="text-center">
           <p className="text-neutral-400">Zákazka sa nenašla.</p>
           <Link href="/zakazky" className="mt-4 inline-block text-sm underline underline-offset-4">
@@ -174,7 +174,7 @@ export default function ZakazkaDetail() {
         <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-3">
           <div className="space-y-5 lg:col-span-2">
             {/* Kontakt */}
-            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+            <section className="rounded-2xl border border-neutral-200/70 bg-card p-5 shadow-soft">
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
                 Kontakt
               </h2>
@@ -208,7 +208,7 @@ export default function ZakazkaDetail() {
           {/* Pravý sidebar */}
           <div className="space-y-5">
             {/* Poznámka */}
-            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+            <section className="rounded-2xl border border-neutral-200/70 bg-card p-5 shadow-soft">
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">Poznámka</h2>
               <textarea
                 value={job.note ?? ""}
@@ -220,7 +220,7 @@ export default function ZakazkaDetail() {
             </section>
 
             {/* Termín realizace */}
-            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+            <section className="rounded-2xl border border-neutral-200/70 bg-card p-5 shadow-soft">
               <h2 className="mb-1 text-xs font-semibold uppercase tracking-widest text-neutral-400">Termín realizácie</h2>
               <p className="mb-2 text-xs text-neutral-400">Kedy začneme pracovať.</p>
               <input
@@ -232,7 +232,7 @@ export default function ZakazkaDetail() {
             </section>
 
             {/* Připomenutí */}
-            <section className="rounded-2xl border border-neutral-200/70 bg-white p-5 shadow-soft">
+            <section className="rounded-2xl border border-neutral-200/70 bg-card p-5 shadow-soft">
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">Pripomenúť zavolať</h2>
               <input
                 type="date"

@@ -68,7 +68,7 @@ export default function JobOffer({
           : { label: "Odoslaná — čaká sa", cls: "bg-neutral-100 text-neutral-600" };
 
   return (
-    <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-white shadow-soft p-5">
+    <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-card shadow-soft p-5">
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">
         Odoslaná ponuka
       </h2>

@@ -77,7 +77,7 @@ export default function Login() {
           <span className="text-sm font-medium text-neutral-500">Rýchla ponuka strechy</span>
         </div>
 
-        <div className="rounded-2xl border border-neutral-200/70 bg-white p-6 shadow-soft sm:p-8">
+        <div className="rounded-2xl border border-neutral-200/70 bg-card p-6 shadow-soft sm:p-8">
           <h1 className="text-2xl font-semibold tracking-tight">
             {mode === "signin" ? "Prihlásenie" : "Registrácia"}
           </h1>

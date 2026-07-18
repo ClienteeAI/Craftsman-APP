@@ -19,14 +19,18 @@
   --color-brand-900: #064e3b;
 
   /* Prémiové jemné stíny — ne tvrdé, spíš „vznáší se". */
-  --shadow-soft: 0 1px 2px rgb(16 24 20 / 0.04), 0 4px 16px rgb(16 24 20 / 0.06);
-  --shadow-lift: 0 2px 4px rgb(16 24 20 / 0.05), 0 12px 32px rgb(16 24 20 / 0.10);
+  --shadow-soft: 0 1px 2px rgb(60 45 25 / 0.05), 0 4px 16px rgb(60 45 25 / 0.07);
+  --shadow-lift: 0 2px 4px rgb(60 45 25 / 0.06), 0 12px 32px rgb(60 45 25 / 0.12);
+
+  /* Podklad kartiček — teplá krémová (světlý dub). Cihličky „plavou" nad
+     zemitým pozadím. Použij bg-card kdekoli. */
+  --color-card: #fbf7ef;
 }
 
 :root {
-  /* Jemná studená off-white — prémiovější než čistě bílá. */
-  --background: #f7f9f8;
-  --foreground: #0f1512;
+  /* Teplá zemitá základna — stavba/řemeslo, ne studená bílá. */
+  --background: #ece3d2;
+  --foreground: #201a12;
 }
 
 html {
@@ -37,13 +41,13 @@ html {
 
 body {
   color: var(--foreground);
-  /* Jemný teplý gradient — náznak dřeva/zeme (dole) a zelene (hore) nad
-     tlmenou off-white. Fixed, aby sa pri scrollovaní nehýbal. Nie je to biele. */
+  /* Výraznější zemitý gradient — hlína/dřevo (dole a po stranách) + náznak
+     zelené (nahoře). Dělnická, stavební nálada. Fixed, ať se nehýbe. */
   background-color: var(--background);
   background-image:
-    radial-gradient(900px 520px at 100% 0%, rgb(16 185 129 / 0.055), transparent 55%),
-    radial-gradient(1000px 640px at 0% 100%, rgb(193 161 118 / 0.10), transparent 58%),
-    radial-gradient(700px 500px at 50% 120%, rgb(180 150 110 / 0.06), transparent 60%);
+    radial-gradient(1000px 560px at 100% -5%, rgb(16 185 129 / 0.07), transparent 55%),
+    radial-gradient(1100px 720px at -8% 100%, rgb(160 104 54 / 0.20), transparent 60%),
+    radial-gradient(900px 640px at 55% 128%, rgb(120 82 48 / 0.14), transparent 62%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

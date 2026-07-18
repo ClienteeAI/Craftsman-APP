@@ -177,8 +177,9 @@ export default function RoofPhoto({
 
   /**
    * Přepnutí atmosférické varianty (léto/sníh/večer/stárnutí) nad hotovým
-   * renderem. „Pôvodné" a už vygenerované varianty jsou z cache okamžité;
-   * nová se dogeneruje. Zobrazený obrázek zároveň putuje do nabídky.
+   * renderem. Jen PREVIEW pro majstra — hlavní obrázek nabídky („nová strecha")
+   * zůstává čistý render, atmosféry se k němu přidají jako přepínatelné navíc.
+   * Proto tady NEsaháme na onRendered; jen do galerie přes emitGallery.
    */
   async function applyVariant(key: string) {
     const base = baseResult.current;
@@ -187,7 +188,6 @@ export default function RoofPhoto({
     if (key === "original") {
       setResultUrl(base.objUrl);
       setActiveVariant("original");
-      onRendered?.(base.dataUrl);
       return;
     }
 
@@ -195,7 +195,6 @@ export default function RoofPhoto({
     if (cached) {
       setResultUrl(cached.objUrl);
       setActiveVariant(key);
-      onRendered?.(cached.dataUrl);
       return;
     }
 
@@ -216,8 +215,7 @@ export default function RoofPhoto({
         variantCache.current.set(key, { objUrl, dataUrl });
         setResultUrl(objUrl);
         setActiveVariant(key);
-        onRendered?.(dataUrl); // hlavní obrázek nabídky = aktuální výběr majstra
-        emitGallery(); // a varianta se přidá do galerie pro zákazníka
+        emitGallery(); // varianta se přidá do galerie pro zákazníka (hlavní render se nemění)
       };
       reader.readAsDataURL(blob);
     } catch (e) {

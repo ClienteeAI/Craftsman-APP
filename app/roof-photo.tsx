@@ -24,7 +24,11 @@ export default function RoofPhoto({
   onRendered?: (dataUrl: string | null) => void;
   /** Galerie pro zákazníka: původní fotka (before) + vygenerované varianty.
       Díky ní má zákazník na nabídce posuvník před/po a přepínač atmosféry. */
-  onGallery?: (g: { before: string | null; variants: { key: string; url: string }[] }) => void;
+  onGallery?: (g: {
+    before: string | null;
+    variants: { key: string; url: string }[];
+    tiles: { key: string; label: string; url: string }[];
+  }) => void;
   /** Fotka z mailu — natáhne se sem, ať ji majster nemusí nahrávat znova. */
   initialPhoto?: File | null;
 }) {
@@ -39,6 +43,9 @@ export default function RoofPhoto({
   const variantCache = useRef<Map<string, { objUrl: string; dataUrl: string }>>(new Map());
   /** Původní fotka jako data URL — „before" do galerie pro zákazníka. */
   const beforeDataUrl = useRef<string | null>(null);
+  /** Render každé tašky (productId → obrázek). Nemaže se při přepnutí — ať se
+      nasbírají všechny tašky, co majster prošel, a zákazník je přepíná zdarma. */
+  const tileRenders = useRef<Map<string, { dataUrl: string; label: string }>>(new Map());
   const [activeVariant, setActiveVariant] = useState<string>("original");
   const [varying, setVarying] = useState<string | null>(null);
   const [brush, setBrush] = useState(44);
@@ -116,14 +123,19 @@ export default function RoofPhoto({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPhoto]);
 
-  /** Pošle nahoru galerii pro zákazníka: before + všechny vygenerované varianty. */
+  /** Pošle nahoru galerii pro zákazníka: before + tašky + atmosférické varianty. */
   function emitGallery() {
     if (!onGallery) return;
     const variants = Array.from(variantCache.current.entries()).map(([key, v]) => ({
       key,
       url: v.dataUrl,
     }));
-    onGallery({ before: beforeDataUrl.current, variants });
+    const tiles = Array.from(tileRenders.current.entries()).map(([key, v]) => ({
+      key,
+      label: v.label,
+      url: v.dataUrl,
+    }));
+    onGallery({ before: beforeDataUrl.current, variants, tiles });
   }
 
   async function render() {
@@ -154,8 +166,11 @@ export default function RoofPhoto({
       reader.onload = () => {
         const dataUrl = String(reader.result);
         baseResult.current = { objUrl, dataUrl };
+        // Uložíme render TÉTO tašky do sbírky (přežije přepnutí hladiny) — ať
+        // zákazník může přepínat mezi všemi taškami, co majster vygeneroval.
+        tileRenders.current.set(productId, { dataUrl, label: productName });
         onRendered?.(dataUrl);
-        emitGallery(); // varianty jsou po novém renderu prázdné, ale before pošleme
+        emitGallery();
       };
       reader.readAsDataURL(blob);
       // Původní fotka jako data URL — „before" do galerie.

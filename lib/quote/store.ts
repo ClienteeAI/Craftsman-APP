@@ -47,6 +47,8 @@ export type SharedQuote = {
   beforeImageUrl: string | null;
   /** Atmosférické varianty (léto/sníh/večer/stárnutí), které majster vygeneroval. */
   variants: { key: string; url: string }[];
+  /** Rendery jednotlivých tašek — zákazník mezi nimi přepíná (vidí každou na streche). */
+  tileOptions: { key: string; label: string; url: string }[];
   /** Id videa (leží v /api/video/[id]). Prázdné = žádné video. */
   videoId: string | null;
   /** Kdy si ji zákazník poprvé otevřel. Řemeslník pak ví, kdy volat. */
@@ -116,7 +118,12 @@ async function resolveRef(db: Db, ref: string | null): Promise<string | null> {
 
 /** DB řádek → SharedQuote. snake_case sloupce ↔ camelCase v appce. */
 function rowToQuote(r: Record<string, unknown>): SharedQuote {
-  const media = (r.media as { before?: string; variants?: Record<string, string> } | null) ?? {};
+  const media =
+    (r.media as {
+      before?: string;
+      variants?: Record<string, string>;
+      tiles?: { key: string; label: string; url: string }[];
+    } | null) ?? {};
   return {
     id: r.id as string,
     createdAt: r.created_at as string,
@@ -133,6 +140,7 @@ function rowToQuote(r: Record<string, unknown>): SharedQuote {
     imageDataUrl: (r.image_url as string) ?? null,
     beforeImageUrl: media.before ?? null,
     variants: Object.entries(media.variants ?? {}).map(([key, url]) => ({ key, url })),
+    tileOptions: (media.tiles ?? []).map((t) => ({ key: t.key, label: t.label, url: t.url })),
     videoId: (r.video_id as string) ?? null,
     openedAt: (r.opened_at as string) ?? null,
     interestedAt: (r.interested_at as string) ?? null,
@@ -177,6 +185,9 @@ export async function saveQuote(
     saved.variants = await Promise.all(
       saved.variants.map(async (v) => ({ key: v.key, url: (await wm(v.url)) ?? v.url })),
     );
+    saved.tileOptions = await Promise.all(
+      saved.tileOptions.map(async (t) => ({ ...t, url: (await wm(t.url)) ?? t.url })),
+    );
   }
 
   const db = getSupabase();
@@ -190,7 +201,12 @@ export async function saveQuote(
       const ref = await uploadImage(db, `${saved.id}-${v.key}`, v.url);
       if (ref) variantsMedia[v.key] = ref;
     }
-    const media = { before: beforeRef, variants: variantsMedia };
+    const tilesMedia: { key: string; label: string; url: string }[] = [];
+    for (const t of saved.tileOptions) {
+      const ref = await uploadImage(db, `${saved.id}-tile-${t.key}`, t.url);
+      if (ref) tilesMedia.push({ key: t.key, label: t.label, url: ref });
+    }
+    const media = { before: beforeRef, variants: variantsMedia, tiles: tilesMedia };
 
     const { error } = await withDbRetry(() =>
       db.from("quotes").insert({
@@ -238,6 +254,11 @@ export async function getQuote(id: string): Promise<SharedQuote | undefined> {
         quote.variants.map(async (v) => ({ key: v.key, url: await resolveRef(db, v.url) })),
       )
     ).filter((v): v is { key: string; url: string } => v.url != null);
+    quote.tileOptions = (
+      await Promise.all(
+        quote.tileOptions.map(async (t) => ({ key: t.key, label: t.label, url: await resolveRef(db, t.url) })),
+      )
+    ).filter((t): t is { key: string; label: string; url: string } => t.url != null);
     quote.signatureUrl = await resolveRef(db, quote.signatureUrl);
     return quote;
   }

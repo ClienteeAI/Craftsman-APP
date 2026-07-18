@@ -95,6 +95,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
             before={q.beforeImageUrl}
             afterDefault={q.imageDataUrl}
             variants={q.variants}
+            tiles={q.tileOptions}
           />
         )}
 

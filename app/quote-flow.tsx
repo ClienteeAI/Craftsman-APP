@@ -49,7 +49,8 @@ export default function QuoteFlow({ company }: { company: string }) {
   const [gallery, setGallery] = useState<{
     before: string | null;
     variants: { key: string; url: string }[];
-  }>({ before: null, variants: [] });
+    tiles: { key: string; label: string; url: string }[];
+  }>({ before: null, variants: [], tiles: [] });
   const [videoId, setVideoId] = useState<string | null>(null);
   // Když nabídka vznikla z existujícího kontaktu (/?zakazka=id), držíme si jeho
   // id + jméno. Id, aby se hotová nabídka přilepila na TU kartu (a ne založila
@@ -244,6 +245,7 @@ export default function QuoteFlow({ company }: { company: string }) {
           imageDataUrl,
           beforeImageUrl: gallery.before,
           variants: gallery.variants,
+          tiles: gallery.tiles,
           // „Zeptej se manželky": pošleme všechny 3 úrovně na výběr.
           tiers:
             letChoose && result

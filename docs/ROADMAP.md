@@ -13,9 +13,9 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - ✅ Slider před/po (táhneš prstem, střecha se mění)
 - ✅ Cache renderů (přepínání tašek od druhého kliknutí zdarma)
 - ✅ Referenční produktová fotka do renderu (Gemini, ověřeno)
-- ⬜ Roční doby (léto / sníh / déšť / západ slunce)
-- ⬜ Večerní záběr (soumrak, rozsvícená okna)
-- ⬜ Stárnutí („takhle za 15 let" — levná krytina zezelená)
+- ✅ Roční doby (léto / sníh / západ slunce) — pruh „Atmosféra" v renderu
+- ✅ Večerní záběr (soumrak, rozsvícená okna) — varianta „Večer"
+- ✅ Stárnutí („takhle za 15 let") — varianta „O 15 rokov"
 - ⬜ Krátké video místo obrázku (2s morf stará→nová, loop)
 - ⬜ Sdílení s vodoznakem ⭐ (logo výrobce na každém obrázku)
 - ⬜ „Zeptej se manželky" (3 varianty odkazem, ona hlasuje)
@@ -44,12 +44,12 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - ✅ Vyhrál/prohrál (za rok řekne, na jaké ceně vyhrává)
 - ✅ Položkový výstup, nikdy jedno číslo
 - ✅ Video zpráva v nabídce
+- ✅ Automatický follow-up ⭐ („postrč nabídku" — otevřel a mlčí / neotevřel)
+- ✅ Nemá marketing a nikdy mít nebude ⭐ (auto FB příspěvek / recenze / portfolio)
 - ⬜ Podpis a záloha rovnou v odkazu (cyklus z týdnů na hodinu)
-- ⬜ Automatický follow-up ⭐ („neozval se 5. den, připomenout?")
 - ⬜ Nákupní seznam jedním klikem do velkoobchodu
 - ⬜ Šablony („dělám pořád to samé")
 - ⬜ Krajský benchmark ⭐ („u vás se to dělá za 5–7k, ty dáváš 4,2") — moat
-- ⬜ Nemá marketing a nikdy mít nebude ⭐ (auto portfolio / FB / recenze)
 - ⬜ „V téhle ulici jsme dělali tři střechy" (s fotkami, automaticky)
 - ⬜ Zakázkový list v ukrajinštině (nabídka SK, příkaz partě jejich jazykem)
 - ⬜ Plocha z jedné fotky (dveře = měřítko → „máte 140 m²")

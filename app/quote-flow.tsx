@@ -284,38 +284,45 @@ export default function QuoteFlow({ company }: { company: string }) {
   }
 
   return (
-    <main className="min-h-screen bg-white text-neutral-900">
-      <div className="mx-auto max-w-2xl px-5 py-8">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-widest text-neutral-400">{company}</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight">Rýchla ponuka strechy</h1>
+    <main className="min-h-screen text-neutral-900">
+      <div className="mx-auto max-w-2xl px-5 py-6 sm:py-10">
+        {/* Horní lišta: značka vlevo, navigace vpravo. */}
+        <header className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white shadow-soft">
+              <RoofMark />
+            </div>
+            <p className="text-sm font-medium text-neutral-500">{company}</p>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <nav className="flex shrink-0 items-center gap-1">
             <Link
               href="/zakazky"
               aria-label="Zákazky"
-              className="flex h-11 w-11 items-center justify-center rounded-full text-neutral-400 active:bg-neutral-100"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
             >
               <ListIcon />
             </Link>
             <Link
               href="/profil"
               aria-label="Moja firma"
-              className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-neutral-400 active:bg-neutral-100"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-neutral-500 transition hover:bg-white hover:text-neutral-900 hover:shadow-soft"
             >
               <GearIcon />
             </Link>
-          </div>
-        </div>
+          </nav>
+        </header>
+
+        <h1 className="mt-8 text-4xl font-semibold tracking-tight sm:text-5xl">
+          Rýchla ponuka strechy
+        </h1>
 
         {/* Napojeno na kontakt z CRM — nabídka se po odeslání přilepí na jeho kartu. */}
         {linkedCustomer && (
-          <div className="mt-5 flex items-center gap-2 rounded-xl border border-neutral-900 bg-neutral-900 px-4 py-3 text-white">
+          <div className="mt-6 flex items-center gap-2.5 rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-brand-800">
             <span>👤</span>
             <p className="text-sm">
               Ponuka pre{" "}
-              <span className="font-medium">
+              <span className="font-semibold">
                 {linkedCustomer.name ?? linkedCustomer.phone ?? "kontakt"}
               </span>
               {linkedCustomer.obec ? ` · ${linkedCustomer.obec}` : ""}
@@ -326,19 +333,19 @@ export default function QuoteFlow({ company }: { company: string }) {
         {/* --- Vstup --- */}
         {phase !== "done" && (
           <>
-            <div className="mt-10 flex flex-col items-center">
+            <div className="mt-10 flex flex-col items-center sm:mt-14">
               <button
                 onClick={phase === "recording" ? stopRecording : startRecording}
                 disabled={busy}
-                className={`flex h-32 w-32 items-center justify-center rounded-full text-white transition-all disabled:opacity-40 ${
+                className={`flex h-32 w-32 items-center justify-center rounded-full text-white transition-all duration-200 disabled:opacity-40 ${
                   phase === "recording"
                     ? "scale-110 animate-pulse bg-red-500 shadow-xl shadow-red-500/30"
-                    : "bg-neutral-900 shadow-lg hover:scale-105"
+                    : "bg-brand-600 shadow-lift ring-8 ring-brand-500/10 hover:scale-105 hover:bg-brand-700"
                 }`}
               >
                 <MicIcon />
               </button>
-              <p className="mt-5 text-center text-neutral-500">
+              <p className="mt-6 text-center text-[15px] text-neutral-500">
                 {phase === "recording"
                   ? "Počúvam… ťukni, keď skončíš"
                   : phase === "transcribing"
@@ -393,7 +400,7 @@ export default function QuoteFlow({ company }: { company: string }) {
 
 Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, telefón aj strechu. Fotky prilož nižšie."
                 rows={5}
-                className="w-full resize-none rounded-xl border border-neutral-200 p-4 text-base outline-none placeholder:text-neutral-400 focus:border-neutral-900"
+                className="w-full resize-none rounded-xl border border-neutral-200 p-4 text-base outline-none placeholder:text-neutral-400 focus:border-brand-500"
               />
 
               {/* Fotky z mailu — príloha alebo vloženie zo schránky. */}
@@ -435,7 +442,7 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
                 <button
                   onClick={() => analyse(transcript)}
                   disabled={busy || transcript.trim().length < 10}
-                  className="rounded-xl bg-neutral-900 px-5 py-3 font-medium text-white disabled:opacity-30"
+                  className="rounded-xl bg-brand-600 px-6 py-3 font-medium text-white shadow-soft transition hover:bg-brand-700 disabled:opacity-30 disabled:shadow-none"
                 >
                   Spracovať
                 </button>
@@ -579,7 +586,7 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
 function Card({ title, children, accent }: { title: string; children: React.ReactNode; accent?: boolean }) {
   return (
     <section
-      className={`rounded-2xl border p-5 ${accent ? "border-neutral-900 bg-neutral-50" : "border-neutral-200"}`}
+      className={`rounded-2xl border p-5 ${accent ? "border-brand-200 bg-brand-50" : "border-neutral-200/70 bg-white shadow-soft"}`}
     >
       <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">{title}</h2>
       <div className="mt-3">{children}</div>
@@ -645,7 +652,7 @@ function CustomerCard({
               value={c[k] ?? ""}
               onChange={set(k)}
               placeholder={k === "name" ? "Ján Kováč" : k === "email" ? "jan@example.sk" : ""}
-              className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+              className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
             />
           </label>
         ))}
@@ -840,7 +847,7 @@ function QuoteCard({
                       onChange={(e) =>
                         setItems((p) => p.map((x, i) => (i === n ? { ...x, label: e.target.value } : x)))
                       }
-                      className="w-full rounded-lg border border-transparent bg-transparent px-2 py-2 text-base focus:border-neutral-900 focus:outline-none"
+                      className="w-full rounded-lg border border-transparent bg-transparent px-2 py-2 text-base focus:border-brand-500 focus:outline-none"
                     />
 
                     <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 px-2">
@@ -955,7 +962,7 @@ function Num({
           const n = parseFloat(t);
           if (Number.isFinite(n)) onChange(n);
         }}
-        className={`${w} rounded-lg border border-neutral-200 px-2 py-2 text-right text-base tabular-nums focus:border-neutral-900 focus:outline-none`}
+        className={`${w} rounded-lg border border-neutral-200 px-2 py-2 text-right text-base tabular-nums focus:border-brand-500 focus:outline-none`}
       />
       {suffix && <span className="ml-1 text-sm text-neutral-400">{suffix}</span>}
     </span>
@@ -976,6 +983,16 @@ function MicIcon() {
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <rect x="9" y="2" width="6" height="12" rx="3" />
       <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RoofMark() {
+  // Střecha domu — značka appky.
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11.5 12 4l9 7.5" />
+      <path d="M5 10.5V20h14v-9.5" />
     </svg>
   );
 }
@@ -1372,7 +1389,7 @@ function FollowUps({
               value={answers[f.field] ?? ""}
               onChange={(e) => set(f.field, e.target.value)}
               placeholder="…alebo napíš odpoveď"
-              className="mt-2 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+              className="mt-2 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-base outline-none focus:border-brand-500"
             />
           </div>
         ))}

@@ -40,8 +40,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang={tenant.locale} className={`${geistSans.variable} h-full antialiased`}>
       {/* overscroll-none: bez toho se na iOS celá appka "gumově" odlepuje od okraje
-          a působí jako web, ne jako nainstalovaná aplikace. */}
-      <body className="flex min-h-full flex-col overscroll-none bg-white">{children}</body>
+          a působí jako web, ne jako nainstalovaná aplikace. Pozadí řeší globals.css. */}
+      <body className="flex min-h-full flex-col overscroll-none">{children}</body>
     </html>
   );
 }

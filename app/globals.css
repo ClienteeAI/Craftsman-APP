@@ -1,26 +1,55 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Designový základ — čistý & prémiový, zelený akcent.
+   Zelená je značková (white-label): pro jiného tenanta stačí přebarvit --color-brand-*.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Značková zelená (střecha / eko). Emerald, kultivovaná. */
+  --color-brand-50: #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-200: #a7f3d0;
+  --color-brand-300: #6ee7b7;
+  --color-brand-400: #34d399;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+  --color-brand-800: #065f46;
+  --color-brand-900: #064e3b;
+
+  /* Prémiové jemné stíny — ne tvrdé, spíš „vznáší se". */
+  --shadow-soft: 0 1px 2px rgb(16 24 20 / 0.04), 0 4px 16px rgb(16 24 20 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(16 24 20 / 0.05), 0 12px 32px rgb(16 24 20 / 0.10);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Jemná studená off-white — prémiovější než čistě bílá. */
+  --background: #f7f9f8;
+  --foreground: #0f1512;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  height: 100%;
+  /* Skutečný font (Geist), ne Arial. Tohle samo zvedne celý dojem. */
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-brand-100);
+  color: var(--color-brand-900);
+}
+
+/* Jemnější, konzistentnější focus — zelený, ne systémově modrý. */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
 }

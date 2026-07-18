@@ -65,24 +65,35 @@ export default function Login() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-50 px-5 text-neutral-900">
+    <main className="flex min-h-screen items-center justify-center px-5 text-neutral-900">
       <div className="w-full max-w-sm">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          {mode === "signin" ? "Prihlásenie" : "Registrácia"}
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          {mode === "signin"
-            ? "Prihlás sa do svojho účtu."
-            : "Vytvor si účet — zákazky a ceny máš potom na každom zariadení."}
-        </p>
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white shadow-soft">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 11.5 12 4l9 7.5" />
+              <path d="M5 10.5V20h14v-9.5" />
+            </svg>
+          </div>
+          <span className="text-sm font-medium text-neutral-500">Rýchla ponuka strechy</span>
+        </div>
 
-        {!configured && (
-          <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Prihlásenie ešte nie je nakonfigurované (chýba anon kľúč).
+        <div className="rounded-2xl border border-neutral-200/70 bg-white p-6 shadow-soft sm:p-8">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {mode === "signin" ? "Prihlásenie" : "Registrácia"}
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            {mode === "signin"
+              ? "Prihlás sa do svojho účtu."
+              : "Vytvor si účet — zákazky a ceny máš potom na každom zariadení."}
           </p>
-        )}
 
-        <form onSubmit={submit} className="mt-6 space-y-3">
+          {!configured && (
+            <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Prihlásenie ešte nie je nakonfigurované (chýba anon kľúč).
+            </p>
+          )}
+
+          <form onSubmit={submit} className="mt-6 space-y-3">
           <input
             type="email"
             value={email}
@@ -91,7 +102,7 @@ export default function Login() {
             autoComplete="email"
             autoCapitalize="none"
             placeholder="E-mail"
-            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-base outline-none focus:border-neutral-900"
+            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-base outline-none focus:border-brand-500"
           />
           <input
             type="password"
@@ -100,7 +111,7 @@ export default function Login() {
             required
             autoComplete={mode === "signin" ? "current-password" : "new-password"}
             placeholder="Heslo"
-            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-base outline-none focus:border-neutral-900"
+            className="w-full rounded-xl border border-neutral-200 px-4 py-3 text-base outline-none focus:border-brand-500"
           />
 
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -109,22 +120,23 @@ export default function Login() {
           <button
             type="submit"
             disabled={busy || !configured}
-            className="w-full rounded-xl bg-neutral-900 py-3.5 text-base font-medium text-white active:opacity-80 disabled:opacity-40"
+            className="w-full rounded-xl bg-brand-600 py-3.5 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 active:opacity-90 disabled:opacity-40 disabled:shadow-none"
           >
             {busy ? "Moment…" : mode === "signin" ? "Prihlásiť sa" : "Zaregistrovať sa"}
           </button>
-        </form>
+          </form>
 
-        <button
-          onClick={() => {
-            setMode(mode === "signin" ? "signup" : "signin");
-            setError(null);
-            setInfo(null);
-          }}
-          className="mt-5 w-full text-center text-sm text-neutral-500 underline underline-offset-4"
-        >
-          {mode === "signin" ? "Nemáš účet? Zaregistruj sa" : "Už máš účet? Prihlás sa"}
-        </button>
+          <button
+            onClick={() => {
+              setMode(mode === "signin" ? "signup" : "signin");
+              setError(null);
+              setInfo(null);
+            }}
+            className="mt-5 w-full text-center text-sm font-medium text-neutral-500 underline underline-offset-4 transition hover:text-brand-700"
+          >
+            {mode === "signin" ? "Nemáš účet? Zaregistruj sa" : "Už máš účet? Prihlás sa"}
+          </button>
+        </div>
       </div>
     </main>
   );

@@ -56,6 +56,13 @@ async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
  * nespoléháme: model překreslí celou fotku, my z výsledku vezmeme jen pixely
  * uvnitř naší masky (lib/composite.ts) a zbytek zahodíme.
  */
+/**
+ * Testovací režim. Když MOCK_RENDER=1, NEVOLÁ Gemini a vrátí vstupní fotku.
+ * Kvůli tomu, aby šlo proklikat celý tok bez placení za generování obrázků —
+ * jedno kolo testů jinak stojí reálné peníze. V produkci flag nenastavuj.
+ */
+const MOCK = process.env.MOCK_RENDER === "1";
+
 export async function renderRoof(
   photo: Buffer,
   mimeType: string,
@@ -63,6 +70,7 @@ export async function renderRoof(
   /** Produktová fotka krytiny od výrobce. Bez ní je výběr z katalogu kulisa. */
   reference?: ReferenceImage,
 ): Promise<Buffer> {
+  if (MOCK) return photo;
   const ai = getClient();
 
   const prompt = [
@@ -134,6 +142,7 @@ export async function renderAtmosphere(
   mimeType: string,
   atmospherePrompt: string,
 ): Promise<Buffer> {
+  if (MOCK) return photo;
   const ai = getClient();
 
   const prompt = [

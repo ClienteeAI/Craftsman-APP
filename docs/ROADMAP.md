@@ -17,7 +17,7 @@ lead magnet) a D (byznys s výrobcem) jsou ta druhá cesta — část se dá slo
 - ✅ Večerní záběr (soumrak, rozsvícená okna) — varianta „Večer"
 - ✅ Stárnutí („takhle za 15 let") — varianta „O 15 rokov"
 - ⬜ Krátké video místo obrázku (2s morf stará→nová, loop)
-- ⬜ Sdílení s vodoznakem ⭐ (logo výrobce na každém obrázku)
+- ✅ Sdílení s vodoznakem ⭐ (logo firmy na renderu + variantách)
 - ✅ „Zeptej se manželky" (3 cenové úrovně, zákazník vybere → majster to vidí)
 - ⬜ PDF „Vizualizace vašeho domu" (důvod říct si o e-mail)
 - ⬜ QR kód na vzorníku v prodejně

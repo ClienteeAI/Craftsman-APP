@@ -46,6 +46,11 @@ export default function ZakazkaDetail() {
     if (updated) setJob({ ...updated });
   }
 
+  function setCustomerField(field: keyof Job["customer"], value: string) {
+    if (!job) return;
+    patch({ customer: { ...job.customer, [field]: value.trim() || null } });
+  }
+
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900">
       <div className="mx-auto max-w-2xl px-5 py-8 pb-28">
@@ -86,11 +91,40 @@ export default function ZakazkaDetail() {
           </div>
         </section>
 
-        {/* Kontakt + akce. */}
+        {/* Kontakt — editovatelný. Doplníš meno, telefón, mail aj u zákazky,
+            ktorá prišla bez nich (napr. z mailu bez podpisu). */}
         <section className="mt-8 rounded-2xl border border-neutral-200 bg-white p-5">
-          <Row label="Obec" value={job.customer.obec} />
-          <Row label="Telefón" value={job.customer.phone} />
-          <Row label="E-mail" value={job.customer.email} />
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
+            Kontakt
+          </h2>
+          <div className="space-y-3">
+            <Field
+              label="Meno a priezvisko"
+              value={job.customer.name}
+              placeholder="Ján Novák"
+              onCommit={(v) => setCustomerField("name", v)}
+            />
+            <Field
+              label="Obec"
+              value={job.customer.obec}
+              placeholder="Bratislava"
+              onCommit={(v) => setCustomerField("obec", v)}
+            />
+            <Field
+              label="Telefón"
+              type="tel"
+              value={job.customer.phone}
+              placeholder="0901 234 567"
+              onCommit={(v) => setCustomerField("phone", v)}
+            />
+            <Field
+              label="E-mail"
+              type="email"
+              value={job.customer.email}
+              placeholder="jan@email.sk"
+              onCommit={(v) => setCustomerField("email", v)}
+            />
+          </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {job.customer.phone && (
               <a
@@ -184,12 +218,39 @@ export default function ZakazkaDetail() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null;
+/**
+ * Editovatelné pole kontaktu. Commit na blur (ne po každém písmenu) — ať se
+ * localStorage i cloudová záloha nespouští při každém stisku klávesy.
+ */
+function Field({
+  label,
+  value,
+  onCommit,
+  type = "text",
+  placeholder,
+}: {
+  label: string;
+  value: string | null;
+  onCommit: (v: string) => void;
+  type?: string;
+  placeholder?: string;
+}) {
+  const [v, setV] = useState(value ?? "");
+  useEffect(() => setV(value ?? ""), [value]);
   return (
-    <div className="flex justify-between border-b border-neutral-100 py-2 text-[15px] last:border-0">
-      <span className="text-neutral-400">{label}</span>
-      <span>{value}</span>
-    </div>
+    <label className="block">
+      <span className="mb-1 block text-xs text-neutral-400">{label}</span>
+      <input
+        type={type}
+        value={v}
+        onChange={(e) => setV(e.target.value)}
+        onBlur={() => {
+          if ((value ?? "") !== v) onCommit(v);
+        }}
+        placeholder={placeholder}
+        autoComplete="off"
+        className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-neutral-900"
+      />
+    </label>
   );
 }

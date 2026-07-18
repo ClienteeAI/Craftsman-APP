@@ -20,11 +20,18 @@ export default function ZakazkaDetail() {
   const router = useRouter();
   const [job, setJob] = useState<Job | null>(null);
   const [notFound, setNotFound] = useState(false);
+  // Popup s poznámkou (připomínkou) při vstupu — ať majster hned vidí, na co
+  // si má u tohoto zákazníka dát pozor, než se do zakázky ponoří.
+  const [showReminder, setShowReminder] = useState(false);
 
   useEffect(() => {
     const j = getJob(id);
-    if (j) setJob(j);
-    else setNotFound(true);
+    if (j) {
+      setJob(j);
+      if (j.note && j.note.trim()) setShowReminder(true);
+    } else {
+      setNotFound(true);
+    }
   }, [id]);
 
   if (notFound) {
@@ -54,6 +61,38 @@ export default function ZakazkaDetail() {
 
   return (
     <main className="min-h-screen text-neutral-900">
+      {/* Popup s poznámkou při vstupu do zakázky. */}
+      {showReminder && job.note && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-5 backdrop-blur-sm"
+          onClick={() => setShowReminder(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lift"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">📌</span>
+              <h2 className="text-lg font-semibold">Pripomienka k zákazníkovi</h2>
+            </div>
+            <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-neutral-700">
+              {job.note}
+            </p>
+            {job.remindAt && (
+              <p className="mt-2 text-xs text-neutral-400">
+                Termín: {new Date(job.remindAt).toLocaleDateString("sk-SK")}
+              </p>
+            )}
+            <button
+              onClick={() => setShowReminder(false)}
+              className="mt-5 w-full rounded-xl bg-brand-600 py-3 text-base font-medium text-white shadow-soft transition hover:bg-brand-700"
+            >
+              Rozumiem
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-7xl px-5 py-6 sm:px-8">
         <Link href="/zakaznici" className="text-sm text-neutral-500 underline underline-offset-4 hover:text-neutral-900">
           ← Späť na zákazníkov
@@ -116,18 +155,8 @@ export default function ZakazkaDetail() {
               </div>
             </section>
 
-            {/* Odoslaná ponuka */}
-            {job.shareUrl ? (
-              <JobOffer shareUrl={job.shareUrl} priceExVat={job.priceExVat} />
-            ) : (
-              <section className="rounded-2xl border border-dashed border-neutral-300 p-5 text-center">
-                <p className="text-sm font-medium text-neutral-600">Táto zákazka zatiaľ nemá ponuku.</p>
-                <p className="mt-1 text-xs leading-relaxed text-neutral-400">
-                  Nemusíš nič robiť odznova — ťukni hore na „Vytvoriť ponuku". Po odoslaní sa sem
-                  pripojí cena aj živý stav (otvoril / má záujem / podpísal).
-                </p>
-              </section>
-            )}
+            {/* Odoslaná ponuka — jen když existuje. */}
+            {job.shareUrl && <JobOffer shareUrl={job.shareUrl} priceExVat={job.priceExVat} />}
           </div>
 
           {/* Pravý sidebar */}

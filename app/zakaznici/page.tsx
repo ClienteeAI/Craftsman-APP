@@ -114,7 +114,9 @@ function ClientTile({ job, index }: { job: Job; index: number }) {
           {initials(c.name)}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{c.name ?? "Bez mena"}</p>
+          <p className="truncate font-medium">
+            <Typewriter text={c.name ?? "Bez mena"} delay={Math.min(index, 12) * 140} />
+          </p>
           <p className="truncate text-xs text-neutral-400">
             {s.dot} {s.label}
           </p>
@@ -134,6 +136,29 @@ function ClientTile({ job, index }: { job: Job; index: number }) {
       </div>
     </Link>
   );
+}
+
+/** Vypisuje text po písmenkách, jako když se píše na klávesnici. */
+function Typewriter({ text, delay = 0 }: { text: string; delay?: number }) {
+  const [shown, setShown] = useState("");
+  useEffect(() => {
+    setShown("");
+    let i = 0;
+    let interval: ReturnType<typeof setInterval> | undefined;
+    const start = setTimeout(() => {
+      interval = setInterval(() => {
+        i++;
+        setShown(text.slice(0, i));
+        if (i >= text.length && interval) clearInterval(interval);
+      }, 45);
+    }, delay);
+    return () => {
+      clearTimeout(start);
+      if (interval) clearInterval(interval);
+    };
+  }, [text, delay]);
+  // nezalomený mezerník drží výšku řádku, než se začne psát
+  return <>{shown || " "}</>;
 }
 
 function Row({ icon, value }: { icon: string; value: string | null }) {

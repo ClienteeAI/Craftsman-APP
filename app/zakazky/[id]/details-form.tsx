@@ -8,6 +8,13 @@ import { SECTIONS, type DetailField, type JobDetails } from "@/lib/crm/job-detai
  * sekce jsou sbalitelné. Commit na blur (u textu/čísel), ať se cloud záloha
  * nespouští po každém písmenu.
  */
+/** Hodnota do náhledu: bool → Áno, jinak text. */
+function fmt(v: string | number | boolean | null | undefined): string {
+  if (v === true) return "Áno";
+  if (v === false || v == null) return "";
+  return String(v);
+}
+
 export default function DetailsForm({
   details,
   onChange,
@@ -39,10 +46,18 @@ export default function DetailsForm({
             const v = d[f.key];
             return v != null && v !== "" && v !== false;
           }).length;
+          // Náhled prvních vyplněných polí (ukáže se po najetí myší, když je sbaleno).
+          const preview = s.fields
+            .filter((f) => {
+              const v = d[f.key];
+              return v != null && v !== "" && v !== false;
+            })
+            .slice(0, 2)
+            .map((f) => `${f.label.split(" (")[0].split(" —")[0]}: ${fmt(d[f.key])}`);
           return (
             <section
               key={s.title}
-              className="overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft"
+              className="group overflow-hidden rounded-2xl border border-neutral-200/70 bg-white shadow-soft transition hover:border-brand-300"
             >
             <button
               onClick={() => setOpen(isOpen ? null : s.title)}
@@ -58,6 +73,21 @@ export default function DetailsForm({
               </span>
               <span className="text-neutral-400">{isOpen ? "▲" : "▼"}</span>
             </button>
+
+            {/* Náhled po najetí myší — když je sbaleno a něco vyplněné. */}
+            {!isOpen && preview.length > 0 && (
+              <div className="grid grid-rows-[0fr] overflow-hidden opacity-0 transition-all duration-200 group-hover:grid-rows-[1fr] group-hover:opacity-100">
+                <div className="min-h-0">
+                  <div className="space-y-1 border-t border-neutral-100 px-5 py-3 text-sm text-neutral-500">
+                    {preview.map((p, n) => (
+                      <p key={n} className="truncate">{p}</p>
+                    ))}
+                    <p className="pt-0.5 text-xs text-brand-700">Klikni pre úpravu →</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {isOpen && (
               <div className="border-t border-neutral-100 p-5">
                 {s.note && <p className="-mt-1 mb-4 text-xs leading-relaxed text-neutral-400">{s.note}</p>}

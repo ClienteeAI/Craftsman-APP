@@ -54,7 +54,21 @@ self.addEventListener("activate", (event) => {
  * offline, ne cachovaný obal.
  */
 self.addEventListener("fetch", (event) => {
-  event.respondWith(fetch(event.request));
+  const req = event.request;
+  let url;
+  try {
+    url = new URL(req.url);
+  } catch {
+    return;
+  }
+  // ⚠️ NEZASAHOVAT do cudzieho pôvodu (video a obrázky zo Supabase Storage) ani
+  // do Range požiadaviek. iOS Safari cez service worker NEZVLÁDA 206/Range —
+  // video by potom hlásilo „formát/odkaz nepodporovaný" (MediaError 4), hoci
+  // súbor je v poriadku. Necháme ich ísť priamo na sieť, mimo SW.
+  if (url.origin !== self.location.origin || req.headers.has("range")) {
+    return;
+  }
+  event.respondWith(fetch(req));
 });
 
 self.addEventListener("push", (event) => {

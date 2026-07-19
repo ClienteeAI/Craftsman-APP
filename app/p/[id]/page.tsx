@@ -69,7 +69,10 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
           )}
         </header>
 
-        <h1 className="mt-8 text-3xl font-semibold leading-tight tracking-tight">
+        <h1
+          className="mt-8 text-[2rem] font-semibold leading-[1.15] tracking-tight sm:text-4xl"
+          style={{ animation: "fadeInUp 0.5s ease both" }}
+        >
           {q.customer.name ? `${q.customer.name.split(" ")[0]}, takto` : "Takto"} by mohla vyzerať
           vaša strecha
         </h1>
@@ -208,7 +211,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
 
       {/* Pod palcem. Zákazník to čte na telefonu. Ťuknutí zároveň dá majstrovi
           vědět, že má zákazník záujem — vidí to hneď na svojej obrazovke. */}
-      <div className="fixed inset-x-0 bottom-0 border-t border-neutral-200 bg-white/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 border-t border-neutral-200 bg-white/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-10px_30px_rgba(0,0,0,0.08)] backdrop-blur">
         <InterestButtons
           id={q.id}
           phone={q.company.phone}

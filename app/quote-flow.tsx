@@ -13,6 +13,7 @@ import type { JobDetails } from "@/lib/crm/job-details";
 import { loadPricingProfile, loadProfile } from "@/lib/quote/profile-store";
 import { fillTemplate } from "@/lib/quote/profile";
 import { buildOfferEmailHtml, buildOfferEmailText } from "@/lib/email/offer-template";
+import { estimateDuration } from "@/lib/quote/duration";
 import { recomputeTotals, repriceItem } from "@/lib/quote/totals";
 import { deleteTemplate, listTemplates, saveTemplate, type Template } from "@/lib/quote/templates";
 import RoofPhoto from "./roof-photo";
@@ -78,6 +79,8 @@ export default function QuoteFlow({ company }: { company: string }) {
   });
   // Termín realizácie pre TÚTO ponuku — u každej zákazky iný, preto nie v profile.
   const [term, setTerm] = useState("");
+  // Ručne nastavená doba realizácie pre túto ponuku. Prázdne = odhad z plochy.
+  const [durationText, setDurationText] = useState("");
   // Solárny odhad priložený do ponuky (keď ho majster pridá). null = neukazuje sa.
   const [solar, setSolar] = useState<{
     annualKwh: number;
@@ -296,23 +299,28 @@ export default function QuoteFlow({ company }: { company: string }) {
           beforeImageUrl: beforeC,
           variants: variantsC,
           tiles: gallery.tiles,
-          // „Zeptej se manželky": pošleme všechny 3 úrovně na výběr.
+          // „Zeptej se manželky": pošleme všechny 3 úrovně na výběr — ale jen ty
+          // s platnou (kladnou) cenou. Keď chýba plocha strechy, cena vyjde NaN;
+          // taký tier by zákazníkovi ukázal „0 €", tak ho vôbec neposielame.
           tiers:
             letChoose && result
-              ? result.tiers.map((t) => ({
-                  id: t.id,
-                  name: t.name,
-                  productName: `${t.product.brand} ${t.product.model}`,
-                  range: t.quote.range,
-                  totals: {
-                    totalExVat: t.quote.totalExVat,
-                    totalIncVat: t.quote.totalIncVat,
-                  },
-                  items: t.quote.items,
-                }))
+              ? result.tiers
+                  .filter((t) => Number.isFinite(t.quote.totalExVat) && t.quote.totalExVat > 0)
+                  .map((t) => ({
+                    id: t.id,
+                    name: t.name,
+                    productName: `${t.product.brand} ${t.product.model}`,
+                    range: t.quote.range,
+                    totals: {
+                      totalExVat: t.quote.totalExVat,
+                      totalIncVat: t.quote.totalIncVat,
+                    },
+                    items: t.quote.items,
+                  }))
               : [],
           videoId,
           solar,
+          durationText,
         }),
       });
       // Keď odpoveď nie je JSON (napr. 413 Payload Too Large z Vercelu), daj
@@ -578,7 +586,15 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
               <FollowUps followUps={result.followUps} onSubmit={submitAnswers} />
             )}
 
-            <CustomerCard initial={customerInitial} onChange={setCustomer} term={term} onTermChange={setTerm} />
+            <CustomerCard
+              initial={customerInitial}
+              onChange={setCustomer}
+              term={term}
+              onTermChange={setTerm}
+              durationText={durationText}
+              onDurationChange={setDurationText}
+              durationPlaceholder={(live && estimateDuration(live.items)) || "napr. 5–6 dní"}
+            />
 
             <TierPicker tiers={result.tiers} selected={tier} onSelect={setTier} />
 
@@ -711,11 +727,17 @@ function CustomerCard({
   onChange,
   term,
   onTermChange,
+  durationText,
+  onDurationChange,
+  durationPlaceholder,
 }: {
   initial: RoofJob["customer"];
   onChange: (c: RoofJob["customer"]) => void;
   term: string;
   onTermChange: (v: string) => void;
+  durationText: string;
+  onDurationChange: (v: string) => void;
+  durationPlaceholder: string;
 }) {
   const [c, setC] = useState(initial);
   // Když AI vytáhne (nebo se změní) zákazníka, nasadíme ho do karty a rovnou
@@ -778,6 +800,21 @@ function CustomerCard({
           placeholder="Napr. od polovice augusta, do 3 týždňov…"
           className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
         />
+      </label>
+
+      {/* Dĺžka realizácie — nastaviteľná, nie vymyslená. Prázdne = odhad z plochy. */}
+      <label className="mt-4 block">
+        <span className="text-xs text-neutral-400">Ako dlho bude realizácia trvať</span>
+        <input
+          type="text"
+          value={durationText}
+          onChange={(e) => onDurationChange(e.target.value)}
+          placeholder={durationPlaceholder}
+          className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
+        />
+        <span className="mt-1 block text-xs text-neutral-400">
+          Prázdne = odhad z plochy ({durationPlaceholder}). Vlastný text prepíše odhad.
+        </span>
       </label>
 
       <div className="mt-4 flex flex-wrap gap-2">

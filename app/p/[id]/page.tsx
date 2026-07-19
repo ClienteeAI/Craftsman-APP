@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getQuote, markOpened } from "@/lib/quote/store";
 import { notifyQuoteOwner } from "@/lib/push/send";
 import { getVideoSource } from "@/lib/quote/video-store";
+import { estimateDuration } from "@/lib/quote/duration";
 import InterestButtons from "./interest-buttons";
 import OfferVisual from "./offer-visual";
 import TierVote from "./tier-vote";
@@ -25,22 +26,6 @@ export const dynamic = "force-dynamic";
 const eur = (n: number) =>
   new Intl.NumberFormat("sk-SK", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
-const dni = (n: number) => (n === 1 ? "deň" : n < 5 ? "dni" : "dní");
-
-/**
- * Orientační délka realizace z plochy střechy (položka práce v m²). Parta
- * zvládne ~35–55 m²/den; demontáž staré krytiny přidá den. Vědomě „+-".
- */
-function estimateDuration(items: { kind: string; unit: string; qty: number | null; label: string }[]): string | null {
-  const areaItem = items.find((i) => i.kind === "praca" && i.unit === "m²");
-  const area = typeof areaItem?.qty === "number" ? areaItem.qty : null;
-  if (!area || area <= 0) return null;
-  const extra = items.some((i) => /demont/i.test(i.label)) ? 1 : 0;
-  const low = Math.max(1, Math.ceil(area / 55) + extra);
-  const high = Math.max(low, Math.ceil(area / 35) + extra);
-  return low === high ? `približne ${low} ${dni(low)}` : `približne ${low}–${high} dní`;
-}
-
 export default async function PublicQuote({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const q = await getQuote(id);
@@ -58,7 +43,8 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
     });
   }
 
-  const duration = estimateDuration(q.items);
+  // Ručne nastavená dĺžka má prednosť; inak odhad z plochy.
+  const duration = q.durationText || estimateDuration(q.items);
 
   // Priamy (podpísaný) odkaz na video — spoľahlivejší pre <video> než 302 cez
   // /api/video/[id] (Safari na iPhone). Fallback na endpoint (demo bez Supabase).
@@ -103,7 +89,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
         )}
 
         <Reveal>
-        {q.tiers.length > 0 ? (
+        {q.tiers.length >= 2 ? (
           <>
             <TierVote id={q.id} tiers={q.tiers} initialChosen={q.chosenTier} />
             {q.earliestTerm && (

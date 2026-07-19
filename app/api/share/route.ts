@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
         tiers: Array.isArray(body.tiers) ? body.tiers : [],
         videoId: body.videoId ?? null,
         solar: body.solar ?? null,
+        durationText: String(body.durationText ?? ""),
       },
       userId,
     );

@@ -74,6 +74,8 @@ export type SharedQuote = {
   signatureUrl: string | null;
   /** Solárny odhad, keď ho majster pridal do ponuky. */
   solar: SharedSolar | null;
+  /** Ručne nastavená dĺžka realizácie. Prázdne = odhad z plochy. */
+  durationText: string;
 };
 
 /**
@@ -160,6 +162,7 @@ function rowToQuote(r: Record<string, unknown>): SharedQuote {
     signedAt: (r.signed_at as string) ?? null,
     signatureUrl: (r.signature_url as string) ?? null,
     solar: (r.solar as SharedSolar) ?? null,
+    durationText: (r.duration_text as string) ?? "",
   };
 }
 
@@ -240,6 +243,7 @@ export async function saveQuote(
         tiers: saved.tiers,
         video_id: saved.videoId,
         solar: saved.solar,
+        duration_text: saved.durationText || null,
       }),
     );
     if (error) throw new Error(`Uloženie ponuky zlyhalo: ${error.message}`);

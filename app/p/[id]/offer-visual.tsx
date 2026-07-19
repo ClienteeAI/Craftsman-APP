@@ -116,6 +116,8 @@ export default function OfferVisual({
           style={{ touchAction: "pan-y" }}
           className="relative -mx-5 cursor-ew-resize select-none overflow-hidden border-y border-neutral-200/70 shadow-lift sm:mx-0 sm:rounded-3xl sm:border"
         >
+          {/* Spodná (originál) určuje rámček; horná sa naň natiahne object-fill,
+              aby obe fotky presne lícovali cez predel (inak „Nová" sedí vyššie). */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={before} alt="Pôvodná strecha" className="block w-full" draggable={false} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -123,7 +125,7 @@ export default function OfferVisual({
             src={after}
             alt="Nová strecha"
             draggable={false}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-fill"
             style={{ clipPath: `inset(0 0 0 ${split}%)` }}
           />
 

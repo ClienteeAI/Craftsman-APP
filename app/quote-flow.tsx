@@ -27,6 +27,37 @@ type Phase = "idle" | "recording" | "transcribing" | "thinking" | "done" | "erro
 const eur = (n: number | null) =>
   n == null ? "—" : new Intl.NumberFormat("sk-SK", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
+/**
+ * Zmenší a skomprimuje obrázok (data URL) na JPEG pred odoslaním.
+ *
+ * Ponuka nesie render + before + atmosférické varianty ako base64. PNG render
+ * má 1,3 MB, pár variantov to vyženie cez Vercel 4,5 MB limit na request →
+ * /api/share zlyhá. JPEG ~1400 px drží telo malé a kvalita na fotku stačí.
+ */
+async function compressImage(dataUrl: string | null, maxPx = 1400, quality = 0.82): Promise<string | null> {
+  if (!dataUrl?.startsWith("data:")) return dataUrl;
+  try {
+    const img = document.createElement("img");
+    await new Promise<void>((res, rej) => {
+      img.onload = () => res();
+      img.onerror = () => rej(new Error("img"));
+      img.src = dataUrl;
+    });
+    const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return dataUrl;
+    ctx.drawImage(img, 0, 0, w, h);
+    return canvas.toDataURL("image/jpeg", quality);
+  } catch {
+    return dataUrl;
+  }
+}
+
 export default function QuoteFlow({ company }: { company: string }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [transcript, setTranscript] = useState("");
@@ -233,6 +264,12 @@ export default function QuoteFlow({ company }: { company: string }) {
     setSharing(true);
     try {
       const profile = loadProfile();
+      // Obrázky skomprimuj na JPEG — nech telo nepretečie Vercel 4,5 MB limit.
+      const [imageC, beforeC, variantsC] = await Promise.all([
+        compressImage(imageDataUrl),
+        compressImage(gallery.before),
+        Promise.all(gallery.variants.map(async (v) => ({ key: v.key, url: (await compressImage(v.url)) ?? v.url }))),
+      ]);
       const res = await fetch("/api/share", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -247,9 +284,9 @@ export default function QuoteFlow({ company }: { company: string }) {
           totals: live.totals,
           range: live.totals.range,
           assumptions: active.quote.assumptions,
-          imageDataUrl,
-          beforeImageUrl: gallery.before,
-          variants: gallery.variants,
+          imageDataUrl: imageC,
+          beforeImageUrl: beforeC,
+          variants: variantsC,
           tiles: gallery.tiles,
           // „Zeptej se manželky": pošleme všechny 3 úrovně na výběr.
           tiers:
@@ -269,9 +306,20 @@ export default function QuoteFlow({ company }: { company: string }) {
           videoId,
         }),
       });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.error);
-      setShareUrl(body.url);
+      // Keď odpoveď nie je JSON (napr. 413 Payload Too Large z Vercelu), daj
+      // zrozumiteľnú hlášku namiesto záhadného „did not match the pattern".
+      let body: { url?: string; error?: string };
+      try {
+        body = await res.json();
+      } catch {
+        throw new Error(
+          res.status === 413
+            ? "Ponuka je príliš veľká (obrázky/varianty). Skús menej atmosfér a pošli znova."
+            : `Odoslanie zlyhalo (${res.status}).`,
+        );
+      }
+      if (!res.ok) throw new Error(body.error ?? `Odoslanie zlyhalo (${res.status}).`);
+      setShareUrl(body.url ?? null);
 
       // Zakázka spadne do CRM. Tady se z jednorázové nabídky stává vedená
       // zakázka — od téhle chvíle ji majster má v seznamu a může ji sledovat.
@@ -307,7 +355,7 @@ export default function QuoteFlow({ company }: { company: string }) {
         customer,
         summary: result?.summary ?? "",
         priceExVat: live.totals.totalExVat,
-        shareUrl: body.url,
+        shareUrl: body.url ?? null,
         status: "ponuka",
         details,
       });

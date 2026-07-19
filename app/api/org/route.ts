@@ -4,8 +4,11 @@ import {
   createTeam,
   deleteTeam,
   ensureOrgContext,
+  inviteMember,
   orgsEnabled,
+  removeMember,
   renameOrg,
+  updateMember,
   updateTeam,
 } from "@/lib/org/server";
 
@@ -62,6 +65,15 @@ export async function POST(req: NextRequest) {
         break;
       case "deleteTeam":
         await deleteTeam(user.id, body.teamId);
+        break;
+      case "inviteMember":
+        await inviteMember(user.id, body.orgId, body.email, body.teamId ?? null, body.role ?? "member");
+        break;
+      case "updateMember":
+        await updateMember(user.id, body.orgId, body.memberId, { teamId: body.teamId, role: body.role });
+        break;
+      case "removeMember":
+        await removeMember(user.id, body.orgId, body.memberId);
         break;
       default:
         return NextResponse.json({ error: "Neznáma akcia." }, { status: 400 });

@@ -178,19 +178,18 @@ function OwnerView({
       {/* Členovia */}
       <section className="rounded-2xl border border-neutral-200/70 bg-card p-6 shadow-soft">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Členovia firmy</h2>
-        <div className="mt-3 space-y-2">
+
+        {/* Pozvať */}
+        <InviteRow teams={ctx.teams} orgId={ctx.org.id} act={act} />
+
+        <div className="mt-4 space-y-2">
           {ctx.members.map((m) => (
-            <div key={m.userId} className="flex items-center justify-between gap-3 text-sm">
-              <span className="min-w-0 truncate">{m.email ?? "—"}</span>
-              <span className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium">
-                {m.role === "owner" ? "majiteľ" : m.role === "lead" ? "šéf party" : "člen"}
-              </span>
-            </div>
+            <MemberRow key={m.userId} member={m} teams={ctx.teams} orgId={ctx.org.id} act={act} />
           ))}
         </div>
         <p className="mt-4 text-xs leading-relaxed text-neutral-400">
-          Pozvať majstrov e-mailom do party dorobíme v ďalšej etape. Zatiaľ si tu nastav štruktúru
-          part a ceny.
+          Pozvanému príde e-mail s odkazom na nastavenie hesla. „Šéf party" vidí zákazky svojej
+          party; „člen" len svoje.
         </p>
       </section>
     </div>
@@ -305,6 +304,125 @@ function TeamCard({
       >
         Uložiť partu
       </button>
+    </div>
+  );
+}
+
+/* ─────────────────────────────── Členovia ────────────────────────────────── */
+
+function InviteRow({
+  teams,
+  orgId,
+  act,
+}: {
+  teams: Team[];
+  orgId: string;
+  act: (payload: Record<string, unknown>) => Promise<void>;
+}) {
+  const [email, setEmail] = useState("");
+  const [teamId, setTeamId] = useState<string>("");
+  const [role, setRole] = useState<"member" | "lead">("member");
+  const [busy, setBusy] = useState(false);
+
+  async function invite() {
+    if (!email.trim()) return;
+    setBusy(true);
+    await act({ action: "inviteMember", orgId, email, teamId: teamId || null, role });
+    setEmail("");
+    setBusy(false);
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-neutral-200 bg-white/60 p-3">
+      <p className="mb-2 text-xs font-medium text-neutral-500">Pozvať majstra</p>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="email@majstra.sk"
+          className="min-w-0 flex-1 rounded-lg border-2 border-neutral-300 bg-white px-3 py-2 text-sm shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+        />
+        <select
+          value={teamId}
+          onChange={(e) => setTeamId(e.target.value)}
+          className="rounded-lg border-2 border-neutral-300 bg-white px-2 py-2 text-sm shadow-soft outline-none focus:border-brand-500"
+        >
+          <option value="">— bez party —</option>
+          {teams.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value as "member" | "lead")}
+          className="rounded-lg border-2 border-neutral-300 bg-white px-2 py-2 text-sm shadow-soft outline-none focus:border-brand-500"
+        >
+          <option value="member">člen</option>
+          <option value="lead">šéf party</option>
+        </select>
+        <button
+          onClick={invite}
+          disabled={busy || !email.trim()}
+          className="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-soft transition hover:bg-brand-700 disabled:opacity-40"
+        >
+          {busy ? "Posielam…" : "Pozvať"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MemberRow({
+  member,
+  teams,
+  orgId,
+  act,
+}: {
+  member: Member;
+  teams: Team[];
+  orgId: string;
+  act: (payload: Record<string, unknown>) => Promise<void>;
+}) {
+  const isOwner = member.role === "owner";
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-neutral-100 bg-white/50 px-3 py-2 text-sm">
+      <span className="min-w-0 flex-1 truncate">{member.email ?? member.userId.slice(0, 8)}</span>
+      {isOwner ? (
+        <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">majiteľ</span>
+      ) : (
+        <>
+          <select
+            value={member.teamId ?? ""}
+            onChange={(e) => act({ action: "updateMember", orgId, memberId: member.userId, teamId: e.target.value || null })}
+            className="rounded-lg border border-neutral-200 bg-white px-2 py-1 text-xs outline-none focus:border-brand-500"
+          >
+            <option value="">bez party</option>
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={member.role}
+            onChange={(e) => act({ action: "updateMember", orgId, memberId: member.userId, role: e.target.value })}
+            className="rounded-lg border border-neutral-200 bg-white px-2 py-1 text-xs outline-none focus:border-brand-500"
+          >
+            <option value="member">člen</option>
+            <option value="lead">šéf party</option>
+          </select>
+          <button
+            onClick={() => confirm("Odobrať člena z firmy?") && act({ action: "removeMember", orgId, memberId: member.userId })}
+            aria-label="Odobrať člena"
+            className="rounded-lg px-2 py-1 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+          >
+            ✕
+          </button>
+        </>
+      )}
     </div>
   );
 }

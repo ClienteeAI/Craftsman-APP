@@ -69,7 +69,7 @@ export default function Profil() {
 
   return (
     <main className="min-h-screen text-neutral-900">
-      <div className="mx-auto max-w-2xl px-5 py-8 pb-32">
+      <div className="mx-auto max-w-5xl px-5 py-8 pb-32">
         <Link href="/" className="text-sm text-neutral-500 underline underline-offset-4">
           ← Späť na ponuku
         </Link>
@@ -78,6 +78,8 @@ export default function Profil() {
           Nastav raz. Odvtedy sa každá ponuka počíta tvojimi cenami.
         </p>
 
+        {/* Cihličky vedľa seba — na počítači využijú šírku, na mobile sa naskladajú. */}
+        <div className="mt-8 grid grid-cols-1 items-start gap-4 lg:grid-cols-2">
         <Section title="Kontakt na ponuke">
           <Field label="Názov firmy" value={p.company.name} onChange={(v) => update({ company: { ...p.company, name: v } })} />
           <Field label="Telefón" type="tel" value={p.company.phone} onChange={(v) => update({ company: { ...p.company, phone: v } })} />
@@ -109,12 +111,12 @@ export default function Profil() {
           <Num label="DPH" unit="%" value={p.vatPct} onChange={(v) => update({ vatPct: v })} />
         </Section>
 
-        <Section title="Nastavenie komunikácie">
+        <Section title="Nastavenie komunikácie" wide>
           <p className="-mt-1 mb-1 text-xs leading-relaxed text-neutral-400">
             Predpripravené správy, ktoré appka vyplní pri odosielaní ponuky. Do textu môžeš
             vložiť premenné a doplnia sa samy:
           </p>
-          <div className="mb-2 flex flex-wrap gap-1.5">
+          <div className="mb-3 flex flex-wrap gap-1.5">
             {VARS.map((v) => (
               <span key={v.key} className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
                 <code className="text-brand-700">{`{${v.key}}`}</code> {v.desc}
@@ -129,26 +131,30 @@ export default function Profil() {
             onChange={(v) => update({ communication: { ...p.communication, offerEmail: v } })}
           />
 
-          <TextArea
-            label="Správa cez WhatsApp / SMS"
-            value={p.communication.waTemplate}
-            rows={4}
-            onChange={(v) => update({ communication: { ...p.communication, waTemplate: v } })}
-          />
+          {/* Šablony vedľa seba — na širokej obrazovke sa nezroluje zbytočne. */}
+          <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <TextArea
+              label="Správa cez WhatsApp / SMS"
+              value={p.communication.waTemplate}
+              rows={8}
+              onChange={(v) => update({ communication: { ...p.communication, waTemplate: v } })}
+            />
+            <div className="space-y-3">
+              <Field
+                label="Predmet e-mailu"
+                value={p.communication.emailSubject}
+                onChange={(v) => update({ communication: { ...p.communication, emailSubject: v } })}
+              />
+              <TextArea
+                label="Text e-mailu"
+                value={p.communication.emailBody}
+                rows={5}
+                onChange={(v) => update({ communication: { ...p.communication, emailBody: v } })}
+              />
+            </div>
+          </div>
 
-          <Field
-            label="Predmet e-mailu"
-            value={p.communication.emailSubject}
-            onChange={(v) => update({ communication: { ...p.communication, emailSubject: v } })}
-          />
-          <TextArea
-            label="Text e-mailu"
-            value={p.communication.emailBody}
-            rows={7}
-            onChange={(v) => update({ communication: { ...p.communication, emailBody: v } })}
-          />
-
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+          <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
             Pozn.: v SMS aj WhatsApp musí byť odkaz vypísaný ako text — schovať ho pod klikacie
             slovo sa v týchto kanáloch technicky nedá. „Klikacie slovo“ ide iba v e-maile
             posielanom cez server; to vieme doplniť neskôr.
@@ -166,11 +172,12 @@ export default function Profil() {
             </button>
           </Section>
         )}
+        </div>
       </div>
 
       {/* Uložit musí být pod palcem, ne na konci dlouhé stránky. */}
       <div className="fixed inset-x-0 bottom-0 border-t border-neutral-200 bg-white/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur">
-        <div className="mx-auto flex max-w-2xl items-center gap-3">
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
           <button
             onClick={save}
             className="flex-1 rounded-xl bg-brand-600 py-3.5 text-base font-medium text-white active:opacity-80"
@@ -184,10 +191,10 @@ export default function Profil() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, wide }: { title: string; children: React.ReactNode; wide?: boolean }) {
   return (
-    <section className="mt-8">
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">{title}</h2>
+    <section className={`rounded-2xl border border-neutral-200/70 bg-card p-6 shadow-soft ${wide ? "lg:col-span-2" : ""}`}>
+      <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-400">{title}</h2>
       <div className="space-y-3">{children}</div>
     </section>
   );

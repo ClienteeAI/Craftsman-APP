@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
         tileOptions: Array.isArray(body.tiles) ? body.tiles : [],
         tiers: Array.isArray(body.tiers) ? body.tiers : [],
         videoId: body.videoId ?? null,
+        solar: body.solar ?? null,
       },
       userId,
     );

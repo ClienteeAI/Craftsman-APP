@@ -26,6 +26,15 @@ export type OfferTier = {
   items: PricedItem[];
 };
 
+/** Solárny odhad priložený k ponuke (upsell). Prázdny = solár sa neukazuje. */
+export type SharedSolar = {
+  annualKwh: number;
+  kWp: number;
+  usableAreaM2: number;
+  savingsEur: number;
+  approxLocation: boolean;
+};
+
 export type SharedQuote = {
   id: string;
   createdAt: string;
@@ -63,6 +72,8 @@ export type SharedQuote = {
   signedAt: string | null;
   /** Podpis zákazníka (podepsaný odkaz na obrázek ve storage). */
   signatureUrl: string | null;
+  /** Solárny odhad, keď ho majster pridal do ponuky. */
+  solar: SharedSolar | null;
 };
 
 /**
@@ -148,6 +159,7 @@ function rowToQuote(r: Record<string, unknown>): SharedQuote {
     chosenTier: (r.chosen_tier as string) ?? null,
     signedAt: (r.signed_at as string) ?? null,
     signatureUrl: (r.signature_url as string) ?? null,
+    solar: (r.solar as SharedSolar) ?? null,
   };
 }
 
@@ -227,6 +239,7 @@ export async function saveQuote(
         media,
         tiers: saved.tiers,
         video_id: saved.videoId,
+        solar: saved.solar,
       }),
     );
     if (error) throw new Error(`Uloženie ponuky zlyhalo: ${error.message}`);

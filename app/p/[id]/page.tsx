@@ -137,6 +137,27 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
         )}
         </Reveal>
 
+        {/* Solárny upsell — keď ho majster pridal. Silný dôvod dokúpiť FV. */}
+        {q.solar && (
+          <Reveal className="mt-4 block overflow-hidden rounded-2xl border border-amber-200 bg-amber-50 shadow-soft">
+            <div className="p-6">
+              <p className="text-xs font-semibold uppercase tracking-widest text-amber-700">
+                ☀️ Solár na túto strechu
+              </p>
+              <p className="mt-1 text-[2.2rem] font-semibold leading-none tracking-tight text-neutral-900 sm:text-4xl">
+                ≈ {q.solar.annualKwh.toLocaleString("sk-SK")} kWh<span className="text-lg text-neutral-500"> / rok</span>
+              </p>
+              <p className="mt-2 text-[15px] leading-relaxed text-neutral-700">
+                Elektráreň ≈ {q.solar.kWp} kWp na ≈ {q.solar.usableAreaM2} m² využiteľnej plochy. Ušetrí zhruba{" "}
+                <span className="font-semibold">{q.solar.savingsEur.toLocaleString("sk-SK")} € ročne</span>.
+              </p>
+              <p className="mt-3 text-xs leading-relaxed text-neutral-500">
+                Orientačný odhad z dát PVGIS (Európska komisia). Najlepší čas riešiť je teraz, keď je strecha aj tak hore.
+              </p>
+            </div>
+          </Reveal>
+        )}
+
         {/* Rozhodujú sa spolu — pošli ponuku blízkym (manželke). */}
         <Reveal>
           <ShareOffer name={q.customer.name} />

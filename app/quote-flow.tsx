@@ -78,6 +78,14 @@ export default function QuoteFlow({ company }: { company: string }) {
   });
   // Termín realizácie pre TÚTO ponuku — u každej zákazky iný, preto nie v profile.
   const [term, setTerm] = useState("");
+  // Solárny odhad priložený do ponuky (keď ho majster pridá). null = neukazuje sa.
+  const [solar, setSolar] = useState<{
+    annualKwh: number;
+    kWp: number;
+    usableAreaM2: number;
+    savingsEur: number;
+    approxLocation: boolean;
+  } | null>(null);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   // Galerie pro zákazníka: původní fotka + vygenerované varianty (posuvník
   // před/po a přepínač atmosféry na zákaznické stránce).
@@ -304,6 +312,7 @@ export default function QuoteFlow({ company }: { company: string }) {
                 }))
               : [],
           videoId,
+          solar,
         }),
       });
       // Keď odpoveď nie je JSON (napr. 413 Payload Too Large z Vercelu), daj
@@ -620,6 +629,10 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
                   : null)
               }
               pitchDeg={result.job.roof.pitchDeg}
+              onChange={(s) => {
+                setSolar(s);
+                setShareUrl(null); // zmena obsahu → ponuku vytvor znovu
+              }}
             />
 
             <VideoMessage

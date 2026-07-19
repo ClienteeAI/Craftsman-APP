@@ -26,14 +26,18 @@ export default function SolarEstimate({
   obec,
   areaM2,
   pitchDeg,
+  onChange,
 }: {
   obec: string | null;
   areaM2: number | null;
   pitchDeg: number | null;
+  /** Hlási hore solár priložený do ponuky pre zákazníka (null = neukazovať). */
+  onChange?: (solar: { annualKwh: number; kWp: number; usableAreaM2: number; savingsEur: number; approxLocation: boolean } | null) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [aspect, setAspect] = useState(0);
   const [est, setEst] = useState<Est | null>(null);
+  const [added, setAdded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,6 +55,8 @@ export default function SolarEstimate({
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "Nepodarilo sa.");
       setEst(body);
+      setAdded(false); // nový výpočet → kým ho majster nepridá, v ponuke nie je
+      onChange?.(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Odhad sa nepodaril.");
     } finally {
@@ -120,6 +126,32 @@ export default function SolarEstimate({
                 {est.approxLocation ? " a približnej polohy" : ""}. Presnú výrobu určí projekt.
                 Najlepší čas riešiť je teraz, keď je strecha aj tak hore.
               </p>
+
+              {/* Až toto ho dostane do ponuky pre zákazníka. */}
+              <button
+                onClick={() => {
+                  const next = !added;
+                  setAdded(next);
+                  onChange?.(
+                    next
+                      ? {
+                          annualKwh: est.annualKwh,
+                          kWp: est.kWp,
+                          usableAreaM2: est.usableAreaM2,
+                          savingsEur: savings,
+                          approxLocation: est.approxLocation,
+                        }
+                      : null,
+                  );
+                }}
+                className={`mt-3 w-full rounded-xl py-2.5 text-sm font-medium transition ${
+                  added
+                    ? "border border-brand-300 bg-brand-50 text-brand-700"
+                    : "bg-brand-600 text-white hover:bg-brand-700"
+                }`}
+              >
+                {added ? "✓ Solár je v ponuke — ťukni pre odobratie" : "Pridať solár do ponuky pre zákazníka"}
+              </button>
             </div>
           )}
         </div>

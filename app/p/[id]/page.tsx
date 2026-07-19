@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getQuote, markOpened } from "@/lib/quote/store";
 import { notifyQuoteOwner } from "@/lib/push/send";
+import { getVideoSource } from "@/lib/quote/video-store";
 import InterestButtons from "./interest-buttons";
 import OfferVisual from "./offer-visual";
 import TierVote from "./tier-vote";
@@ -59,6 +60,14 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
 
   const duration = estimateDuration(q.items);
 
+  // Priamy (podpísaný) odkaz na video — spoľahlivejší pre <video> než 302 cez
+  // /api/video/[id] (Safari na iPhone). Fallback na endpoint (demo bez Supabase).
+  let videoUrl: string | null = null;
+  if (q.videoId) {
+    const vs = await getVideoSource(q.videoId);
+    videoUrl = vs?.kind === "redirect" ? vs.url : `/api/video/${q.videoId}`;
+  }
+
   return (
     <main className="min-h-screen text-neutral-900">
       <div className="mx-auto max-w-2xl px-5 py-8 pb-28">
@@ -73,7 +82,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
         </header>
 
         {/* Videopozdrav majstra ako kruh — tvár človeka je najsilnejší prvý dojem. */}
-        {q.videoId && <MasterVideo videoId={q.videoId} />}
+        {videoUrl && <MasterVideo src={videoUrl} />}
 
         <h1
           className="mt-8 text-[2rem] font-semibold leading-[1.15] tracking-tight sm:text-4xl"

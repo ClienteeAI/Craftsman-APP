@@ -12,6 +12,7 @@ import { getJob, upsertJob } from "@/lib/crm/jobs";
 import type { JobDetails } from "@/lib/crm/job-details";
 import { loadProfile } from "@/lib/quote/profile-store";
 import { fillTemplate } from "@/lib/quote/profile";
+import { buildOfferEmailHtml, buildOfferEmailText } from "@/lib/email/offer-template";
 import { recomputeTotals, repriceItem } from "@/lib/quote/totals";
 import { deleteTemplate, listTemplates, saveTemplate, type Template } from "@/lib/quote/templates";
 import RoofPhoto from "./roof-photo";
@@ -1152,10 +1153,39 @@ function ShareBar({
   const message = url ? fillTemplate(comm.communication.waTemplate, vars) : "";
   const emailSubject = url ? fillTemplate(comm.communication.emailSubject, vars) : "";
   const emailBody = url ? fillTemplate(comm.communication.emailBody, vars) : "";
+  // HTML verzia s klikacím tlačidlom — pre odoslanie z vlastnej schránky.
+  const emailHtml = url ? buildOfferEmailHtml(comm.communication.emailBody, vars) : "";
+  const emailText = url ? buildOfferEmailText(comm.communication.emailBody, vars) : "";
   const mailHref = url
     ? `mailto:${customerEmail ?? ""}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
     : "#";
   const wa = customerPhone ? waNumber(customerPhone) : null;
+
+  // Odoslanie z pripojenej schránky majstra (značkový HTML e-mail).
+  const [mailState, setMailState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [mailErr, setMailErr] = useState<string | null>(null);
+  async function sendFromMailbox() {
+    if (!customerEmail || !url) return;
+    setMailState("sending");
+    setMailErr(null);
+    try {
+      const res = await fetch("/api/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: customerEmail, subject: emailSubject, html: emailHtml, text: emailText }),
+      });
+      const b = await res.json();
+      if (b.error) {
+        setMailState("error");
+        setMailErr(b.error);
+        return;
+      }
+      setMailState("sent");
+    } catch {
+      setMailState("error");
+      setMailErr("Odoslanie zlyhalo.");
+    }
+  }
 
   /**
    * Dotazujeme se, jestli si zákazník nabídku otevřel.
@@ -1321,12 +1351,40 @@ function ShareBar({
             Poslať cez SMS
           </a>
         )}
-        <a
-          href={mailHref}
-          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white py-3.5 text-base font-medium active:bg-neutral-100"
-        >
-          ✉️ Poslať e-mailom
-        </a>
+
+        {/* E-mail z vlastnej schránky — pravý HTML e-mail s klikacím tlačidlom. */}
+        {customerEmail ? (
+          <button
+            onClick={sendFromMailbox}
+            disabled={mailState === "sending" || mailState === "sent"}
+            className="flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white py-3.5 text-base font-medium transition active:bg-neutral-100 disabled:opacity-50"
+          >
+            {mailState === "sent"
+              ? "✓ Odoslané e-mailom"
+              : mailState === "sending"
+                ? "Posielam e-mail…"
+                : "✉️ Poslať z mojej schránky"}
+          </button>
+        ) : (
+          <p className="text-center text-xs text-neutral-400">Doplň zákazníkovi e-mail a objaví sa odoslanie mailom.</p>
+        )}
+
+        {mailErr && (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            {mailErr} —{" "}
+            <a href="/posta" className="underline underline-offset-2">
+              pripoj schránku v Pošta
+            </a>
+            , alebo pošli cez klasický e-mail nižšie.
+          </p>
+        )}
+
+        {/* Záloha: otvorí poštového klienta (holý odkaz, bez schránky). */}
+        {customerEmail && (
+          <a href={mailHref} className="text-center text-xs text-neutral-400 underline underline-offset-2">
+            Otvoriť v poštovom klientovi
+          </a>
+        )}
       </div>
 
       {/* Odkaz + kopírovat pro případ, že chce poslat jinudy (mail, Messenger…). */}

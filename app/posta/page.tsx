@@ -88,6 +88,7 @@ export default function Posta() {
 function ConnectForm({ onConnected }: { onConnected: () => void }) {
   const [f, setF] = useState<Form>(EMPTY);
   const [busy, setBusy] = useState(false);
+  const [ack, setAck] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   function set<K extends keyof Form>(k: K, v: Form[K]) {
@@ -172,9 +173,17 @@ function ConnectForm({ onConnected }: { onConnected: () => void }) {
 
           {err && <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{err}</p>}
 
+          <label className="flex cursor-pointer items-start gap-2.5 text-sm text-neutral-600">
+            <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-0.5 h-4 w-4" />
+            <span>
+              Beriem na vedomie, že heslo je síce šifrované, ale za bezpečnosť schránky sa neručí —
+              pripájam ju na <strong>vlastnú zodpovednosť</strong>.
+            </span>
+          </label>
+
           <button
             onClick={connect}
-            disabled={busy}
+            disabled={busy || !ack}
             className="w-full rounded-xl bg-brand-600 py-3 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 disabled:opacity-40"
           >
             {busy ? "Overujem spojenie…" : "Pripojiť schránku"}
@@ -190,6 +199,10 @@ function ConnectForm({ onConnected }: { onConnected: () => void }) {
           <li>Vlastná doménová schránka funguje s bežným menom a heslom.</li>
           <li>Appka číta a maže priamo v tvojej schránke — je to tvoja pošta.</li>
         </ul>
+        <p className="mt-3 border-t border-amber-200 pt-3 text-[13px] font-medium">
+          Aj keď heslo šifrujeme, za bezpečnosť tvojej e-mailovej schránky <strong>neručíme</strong>.
+          Schránku pripájaš na <strong>vlastnú zodpovednosť</strong>.
+        </p>
       </aside>
     </div>
   );

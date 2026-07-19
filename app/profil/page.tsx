@@ -27,6 +27,9 @@ function newLabourId(): string {
   return "lab-" + Math.random().toString(36).slice(2, 9);
 }
 
+/** Jednotky pro vlastní položky práce. */
+const UNITS = ["€/m²", "€/ks", "€/bm", "€/hod", "€/deň", "€ spolu"];
+
 export default function Profil() {
   // Vycházíme z výchozích hodnot, ne z null. Kdyby se čekalo na useEffect,
   // vyrenderuje server prázdno a majster kouká na bílou obrazovku, než se
@@ -104,17 +107,6 @@ export default function Profil() {
         <Section title="Zisk a DPH">
           <Num label="Želaná ziskovosť zo zákazky" unit="%" value={p.marginPct} onChange={(v) => update({ marginPct: v })} />
           <Num label="DPH" unit="%" value={p.vatPct} onChange={(v) => update({ vatPct: v })} />
-        </Section>
-
-        <Section title="Termín realizácie">
-          <p className="-mt-1 mb-2 text-xs leading-relaxed text-neutral-400">
-            Prvá otázka každého zákazníka. Objaví sa v každej ponuke.
-          </p>
-          <Field
-            label="Najbližší voľný termín"
-            value={p.earliestTerm}
-            onChange={(v) => update({ earliestTerm: v })}
-          />
         </Section>
 
         <Section title="Nastavenie komunikácie">
@@ -325,11 +317,17 @@ function CustomLabour({
             }}
             className="w-20 rounded-lg border-2 border-neutral-300 bg-white px-2.5 py-2.5 text-right text-base tabular-nums shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
           />
-          <input
+          <select
             value={it.unit}
             onChange={(e) => set(it.id, { unit: e.target.value })}
-            className="w-16 rounded-lg border-2 border-neutral-300 bg-white px-2 py-2.5 text-center text-sm text-neutral-500 shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
-          />
+            className="w-24 shrink-0 rounded-lg border-2 border-neutral-300 bg-white px-2 py-2.5 text-center text-sm text-neutral-600 shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+          >
+            {UNITS.map((u) => (
+              <option key={u} value={u}>
+                {u}
+              </option>
+            ))}
+          </select>
           <button
             onClick={() => remove(it.id)}
             aria-label="Odstrániť položku"

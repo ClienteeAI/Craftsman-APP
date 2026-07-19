@@ -44,6 +44,8 @@ export default function QuoteFlow({ company }: { company: string }) {
     phone: null,
     email: null,
   });
+  // Termín realizácie pre TÚTO ponuku — u každej zákazky iný, preto nie v profile.
+  const [term, setTerm] = useState("");
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   // Galerie pro zákazníka: původní fotka + vygenerované varianty (posuvník
   // před/po a přepínač atmosféry na zákaznické stránce).
@@ -238,7 +240,7 @@ export default function QuoteFlow({ company }: { company: string }) {
           summary: result?.summary ?? "",
           tierName: active.name,
           productName: `${active.product.brand} ${active.product.model}`,
-          earliestTerm: profile.earliestTerm,
+          earliestTerm: term,
           items: live.items,
           totals: live.totals,
           range: live.totals.range,
@@ -517,7 +519,7 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
               <FollowUps followUps={result.followUps} onSubmit={submitAnswers} />
             )}
 
-            <CustomerCard initial={customerInitial} onChange={setCustomer} />
+            <CustomerCard initial={customerInitial} onChange={setCustomer} term={term} onTermChange={setTerm} />
 
             <TierPicker tiers={result.tiers} selected={tier} onSelect={setTier} />
 
@@ -608,6 +610,7 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
               customerEmail={customer.email}
               customerName={customer.name}
               companyName={company}
+              term={term}
               hasVideo={!!videoId}
               tiers={letChoose ? result.tiers.map((t) => ({ id: t.id, name: t.name })) : undefined}
             />
@@ -643,9 +646,13 @@ function Card({ title, children, accent }: { title: string; children: React.Reac
 function CustomerCard({
   initial,
   onChange,
+  term,
+  onTermChange,
 }: {
   initial: RoofJob["customer"];
   onChange: (c: RoofJob["customer"]) => void;
+  term: string;
+  onTermChange: (v: string) => void;
 }) {
   const [c, setC] = useState(initial);
   // Když AI vytáhne (nebo se změní) zákazníka, nasadíme ho do karty a rovnou
@@ -696,6 +703,19 @@ function CustomerCard({
           </label>
         ))}
       </div>
+
+      {/* Termín realizácie pre túto ponuku — prvá otázka zákazníka. Per zákazka,
+          nie globálne v profile (každá je iná). Objaví sa v ponuke aj v maile. */}
+      <label className="mt-4 block">
+        <span className="text-xs text-neutral-400">Termín realizácie (pre túto ponuku)</span>
+        <input
+          type="text"
+          value={term}
+          onChange={(e) => onTermChange(e.target.value)}
+          placeholder="Napr. od polovice augusta, do 3 týždňov…"
+          className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
+        />
+      </label>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {c.phone && (
@@ -1095,6 +1115,7 @@ function ShareBar({
   customerEmail,
   customerName,
   companyName,
+  term,
   hasVideo,
   tiers,
 }: {
@@ -1105,6 +1126,7 @@ function ShareBar({
   customerEmail: string | null;
   customerName: string | null;
   companyName: string;
+  term: string;
   hasVideo: boolean;
   /** Úrovně, když je poslal na výběr — pro zobrazení názvu vybrané. */
   tiers?: { id: string; name: string }[];
@@ -1124,7 +1146,7 @@ function ShareBar({
     meno: customerName ? customerName.split(" ")[0] : "",
     firma: companyName,
     odkaz: url ?? "",
-    termin: comm.earliestTerm || "podľa dohody",
+    termin: term || "podľa dohody",
   };
   // Předvyplněná zpráva, kterou zákazník uvidí ve WhatsAppe/SMS.
   const message = url ? fillTemplate(comm.communication.waTemplate, vars) : "";

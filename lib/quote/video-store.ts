@@ -25,6 +25,22 @@ type StoredVideo = { buffer: Buffer; contentType: string };
 const g = globalThis as typeof globalThis & { __videos?: Map<string, StoredVideo> };
 const mem: Map<string, StoredVideo> = (g.__videos ??= new Map());
 
+/**
+ * Cieľ pre priame nahranie videa do Storage (obchádza Vercel 4,5 MB limit).
+ *
+ * Server podpíše upload URL; klient potom nahrá súbor PRIAMO do Supabase, nie
+ * cez našu funkciu. Vráti id (= cesta v buckete) a token, ktorým klient upload
+ * autorizuje. Null keď Supabase nie je nastavené (padne sa na /api/video).
+ */
+export async function createVideoUploadTarget(): Promise<{ id: string; token: string } | null> {
+  const db = getSupabase();
+  if (!db) return null;
+  const id = randomBytes(6).toString("hex");
+  const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(id);
+  if (error || !data) return null;
+  return { id, token: data.token };
+}
+
 export async function saveVideo(buffer: Buffer, contentType: string): Promise<string> {
   const id = randomBytes(6).toString("hex");
   const type = contentType || "video/mp4";

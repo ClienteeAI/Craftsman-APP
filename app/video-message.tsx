@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/browser";
 
 /**
  * Video zpráva pro zákazníka. #38.
@@ -17,9 +18,10 @@ import { useState } from "react";
  * potvrzení ze serveru, a chyba se řekne nahlas.
  */
 
-// Video nad tímto odmítneme — velké video přes síť na notebook chvíli trvá
-// a v paměti procesu je drahé. Do provozu MUSÍ do R2/storage.
-const MAX_MB = 60;
+// Video sa nahráva PRIAMO do Supabase Storage (nie cez server). Limit držíme
+// pod výchozím limitom Supabase na súbor (50 MB) — pár sekúnd videa sa tam
+// pohodlne vojde. Väčšie odmietneme rovno v prehliadači.
+const MAX_MB = 50;
 
 type Status = "idle" | "uploading" | "done" | "error";
 
@@ -51,6 +53,23 @@ export default function VideoMessage({
     onUploading?.(true);
 
     try {
+      // Primárne: podpíš cieľ a nahraj PRIAMO do Supabase Storage — obchádza
+      // Vercel 4,5 MB limit na request (video by inak spadlo ako veľká fotka).
+      const signRes = await fetch("/api/video/sign", { method: "POST" });
+      const sign = await signRes.json();
+      if (sign.direct && sign.id && sign.token) {
+        const supabase = createClient();
+        if (!supabase) throw new Error("Nedostupné úložisko.");
+        const { error } = await supabase.storage
+          .from("videos")
+          .uploadToSignedUrl(sign.id, sign.token, file, { contentType: file.type || "video/mp4" });
+        if (error) throw new Error(error.message);
+        onReady(sign.id);
+        setStatus("done");
+        return;
+      }
+
+      // Fallback (demo bez Supabase): cez server. Pozor na 4,5 MB.
       const form = new FormData();
       form.append("video", file);
       const res = await fetch("/api/video", { method: "POST", body: form });

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/browser";
 
 /**
  * Video zpráva pro zákazníka. #38.
@@ -46,6 +45,11 @@ export default function VideoMessage({
       setError(`Video je príliš veľké (${mb} MB). Natoč kratšie, do ${MAX_MB} MB.`);
       return;
     }
+    if (file.size < 1000) {
+      setStatus("error");
+      setError("Video je prázdne — skús natočiť znova.");
+      return;
+    }
 
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(URL.createObjectURL(file));
@@ -55,15 +59,26 @@ export default function VideoMessage({
     try {
       // Primárne: podpíš cieľ a nahraj PRIAMO do Supabase Storage — obchádza
       // Vercel 4,5 MB limit na request (video by inak spadlo ako veľká fotka).
+      // Holý PUT na podpísanú URL (overené, funguje) — nie cez supabase-js.
       const signRes = await fetch("/api/video/sign", { method: "POST" });
       const sign = await signRes.json();
       if (sign.direct && sign.id && sign.token) {
-        const supabase = createClient();
-        if (!supabase) throw new Error("Nedostupné úložisko.");
-        const { error } = await supabase.storage
-          .from("videos")
-          .uploadToSignedUrl(sign.id, sign.token, file, { contentType: file.type || "video/mp4" });
-        if (error) throw new Error(error.message);
+        const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        if (!base) throw new Error("Chýba adresa úložiska.");
+        const url = `${base}/storage/v1/object/upload/sign/videos/${sign.id}?token=${encodeURIComponent(sign.token)}`;
+        const up = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Content-Type": file.type || "video/mp4",
+            ...(anon ? { apikey: anon } : {}),
+          },
+          body: file,
+        });
+        if (!up.ok) {
+          const t = await up.text().catch(() => "");
+          throw new Error(`Nahranie do úložiska zlyhalo (${up.status}). ${t.slice(0, 120)}`);
+        }
         onReady(sign.id);
         setStatus("done");
         return;

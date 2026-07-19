@@ -44,6 +44,15 @@ export async function POST(req: NextRequest) {
     if (!m) return NextResponse.json({ error: "Neplatný obrázok." }, { status: 400 });
 
     const buffer = Buffer.from(m[2], "base64");
+
+    // Testovací režim: vráti vstupný obrázok bez AI (žiadne peniaze).
+    if (new URL(req.url).searchParams.get("mock") === "1") {
+      return new NextResponse(new Uint8Array(buffer), {
+        status: 200,
+        headers: { "Content-Type": m[1], "Cache-Control": "no-store", "X-Mock": "1" },
+      });
+    }
+
     const out = await renderAtmosphere(buffer, m[1], atmosphere);
 
     return new NextResponse(new Uint8Array(out), {

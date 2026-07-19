@@ -61,6 +61,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Chýba fotka alebo maska." }, { status: 400 });
     }
 
+    // Testovací režim: vráti pôvodnú fotku bez AI — nič nestojí. Majster ho
+    // zapne pri testovaní flow a vypne pre reálneho klienta.
+    if (new URL(req.url).searchParams.get("mock") === "1") {
+      const bytes = Buffer.from(await photoFile.arrayBuffer());
+      return new NextResponse(new Uint8Array(bytes), {
+        headers: { "Content-Type": photoFile.type || "image/jpeg", "X-Mock": "1" },
+      });
+    }
+
     const product = PRODUCTS.find((p) => p.id === productId);
     if (!product) {
       return NextResponse.json({ error: `Neznámy produkt: ${productId}` }, { status: 400 });

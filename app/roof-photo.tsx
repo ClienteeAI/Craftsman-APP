@@ -85,6 +85,20 @@ export default function RoofPhoto({
   // Diagnóza z fotky — soukromá pomůcka pro majstra, ne text pro zákazníka.
   const [findings, setFindings] = useState<RoofFinding[] | null>(null);
   const [inspecting, setInspecting] = useState(false);
+  // Testovací režim: negeneruje AI (šetrí peniaze pri testovaní). Pamätá sa.
+  const [testMode, setTestMode] = useState(false);
+  useEffect(() => {
+    setTestMode(localStorage.getItem("render-test-mode") === "1");
+  }, []);
+  function toggleTestMode(on: boolean) {
+    setTestMode(on);
+    try {
+      localStorage.setItem("render-test-mode", on ? "1" : "0");
+    } catch {
+      /* súkromný režim môže blokovať localStorage — nevadí */
+    }
+  }
+  const mockQ = testMode ? "?mock=1" : "";
 
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -196,7 +210,7 @@ export default function RoofPhoto({
     form.append("productId", productId);
 
     try {
-      const res = await fetch("/api/render", { method: "POST", body: form });
+      const res = await fetch(`/api/render${mockQ}`, { method: "POST", body: form });
       if (!res.ok) throw new Error((await res.json()).error ?? `HTTP ${res.status}`);
       const blob = await res.blob();
       const objUrl = URL.createObjectURL(blob);
@@ -258,7 +272,7 @@ export default function RoofPhoto({
     setVarying(key);
     setError(null);
     try {
-      const res = await fetch("/api/render/variant", {
+      const res = await fetch(`/api/render/variant${mockQ}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: base.dataUrl, variant: key }),
@@ -295,14 +309,27 @@ export default function RoofPhoto({
   }, [productId]);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-neutral-200">
+    <section className={`overflow-hidden rounded-2xl border ${testMode ? "border-amber-300" : "border-neutral-200"}`}>
       <div className="border-b border-neutral-100 p-5">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Vizualizácia</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">Vizualizácia</h2>
+          {/* Testovací prepínač — negeneruje AI, šetrí peniaze pri testovaní. */}
+          <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs font-medium text-neutral-500">
+            <input type="checkbox" checked={testMode} onChange={(e) => toggleTestMode(e.target.checked)} className="h-4 w-4" />
+            🧪 Test (zadarmo)
+          </label>
+        </div>
         <p className="mt-1 text-sm text-neutral-500">
           {phase === "done"
             ? `Takto bude strecha vyzerať s krytinou ${productName}.`
             : `Pridaj fotku z obhliadky a ukážeš zákazníkovi jeho dom s krytinou ${productName}.`}
         </p>
+        {testMode && (
+          <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+            🧪 Testovací režim je zapnutý — obrázok sa <strong>negeneruje</strong> (ukáže pôvodnú fotku), takže testovanie
+            nič nestojí. Pre reálneho klienta ho <strong>vypni</strong>, nech uvidí novú strechu.
+          </p>
+        )}
       </div>
 
       {phase === "empty" && (

@@ -43,9 +43,12 @@ export default function RoofPhoto({
   const variantCache = useRef<Map<string, { objUrl: string; dataUrl: string }>>(new Map());
   /** Původní fotka jako data URL — „before" do galerie pro zákazníka. */
   const beforeDataUrl = useRef<string | null>(null);
-  /** Render každé tašky (productId → obrázek). Nemaže se při přepnutí — ať se
-      nasbírají všechny tašky, co majster prošel, a zákazník je přepíná zdarma. */
-  const tileRenders = useRef<Map<string, { dataUrl: string; label: string }>>(new Map());
+  /** Poslední maska (obtažení střechy). Uložíme ji, ať jde překreslit pro jinou
+      tašku bez nutnosti kreslit masku znovu — render pak jede i z „hotového" stavu. */
+  const lastMask = useRef<Blob | null>(null);
+  /** Majster vybral jinou krytinu, než je vygenerovaná → render je zastaralý.
+      Nekreslíme automaticky (stálo by to peníze); počkáme na jeho „Prekresliť". */
+  const [staleTile, setStaleTile] = useState(false);
   const [activeVariant, setActiveVariant] = useState<string>("original");
   const [varying, setVarying] = useState<string | null>(null);
   const [brush, setBrush] = useState(44);
@@ -139,12 +142,22 @@ export default function RoofPhoto({
   }
 
   async function render() {
-    const c = canvasRef.current;
-    if (!photoFile || !c) return;
+    if (!photoFile) return;
     setPhase("rendering");
     setError(null);
-    const mask: Blob | null = await new Promise((res) => c.toBlob(res, "image/png"));
-    if (!mask) return setError("Nepodarilo sa vytvoriť masku.");
+    // Masku vezmi z plátna (keď kreslíme), inak z uloženej — nech ide prekresliť
+    // inú tašku aj z „hotového" stavu, bez opätovného kreslenia masky.
+    let mask = lastMask.current;
+    const c = canvasRef.current;
+    if (c) {
+      const fresh: Blob | null = await new Promise((res) => c.toBlob(res, "image/png"));
+      if (fresh) mask = fresh;
+    }
+    if (!mask) {
+      setPhase("masking");
+      return setError("Označ prstom strechu, ktorú meníš.");
+    }
+    lastMask.current = mask;
 
     const form = new FormData();
     form.append("photo", photoFile);
@@ -166,9 +179,6 @@ export default function RoofPhoto({
       reader.onload = () => {
         const dataUrl = String(reader.result);
         baseResult.current = { objUrl, dataUrl };
-        // Uložíme render TÉTO tašky do sbírky (přežije přepnutí hladiny) — ať
-        // zákazník může přepínat mezi všemi taškami, co majster vygeneroval.
-        tileRenders.current.set(productId, { dataUrl, label: productName });
         onRendered?.(dataUrl);
         emitGallery();
       };
@@ -181,6 +191,7 @@ export default function RoofPhoto({
       };
       beforeReader.readAsDataURL(photoFile);
       renderedFor.current = productId;
+      setStaleTile(false); // práve vygenerované pre aktuálnu krytinu
       setSplit(50);
       setPhase("done");
     } catch (e) {
@@ -241,15 +252,16 @@ export default function RoofPhoto({
   }
 
   /**
-   * Majster přepnul cenovou hladinu → jiná taška → překreslíme.
-   * Fotka i maska zůstávají, takže z toho je "ten istý dom, iná strecha".
-   * Druhé a třetí přepnutí padne do cache a je okamžité a zdarma.
+   * Majster přepnul krytinu → NErenderujeme automaticky (stálo by to peníze za
+   * každou prohlédnutou tašku). Jen označíme render za zastaralý; skutečné
+   * překreslení spustí majster vědomě tlačítkem „Prekresliť". Výběr tašky podle
+   * katalogu je zdarma; platí se až za render finální volby.
    */
   useEffect(() => {
-    if (renderedFor.current && renderedFor.current !== productId && photoFile && hasMask) {
-      void renderRef.current();
+    if (renderedFor.current && renderedFor.current !== productId) {
+      setStaleTile(true);
     }
-  }, [productId, photoFile, hasMask]);
+  }, [productId]);
 
   return (
     <section className="overflow-hidden rounded-2xl border border-neutral-200">
@@ -333,6 +345,23 @@ export default function RoofPhoto({
       {phase === "done" && photoUrl && resultUrl && (
         <div className="p-5">
           <BeforeAfter before={photoUrl} after={resultUrl} split={split} onSplit={setSplit} />
+
+          {/* Vybral inú krytinu → render je starý. Prekreslenie je vedomý krok
+              (jeden render = jedna platba), preto naň čakáme, nespúšťame sami. */}
+          {staleTile && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <span className="text-sm text-amber-900">
+                Vybral si krytinu <span className="font-medium">{productName}</span> — vizualizácia je ešte pôvodná.
+              </span>
+              <button
+                onClick={render}
+                disabled={phase !== "done"}
+                className="shrink-0 rounded-lg bg-brand-600 px-4 py-1.5 text-sm font-medium text-white shadow-soft transition hover:bg-brand-700"
+              >
+                Prekresliť
+              </button>
+            </div>
+          )}
 
           {/* Atmosférické varianty — obrázek, který si zákazník uloží. */}
           <div className="mt-4">

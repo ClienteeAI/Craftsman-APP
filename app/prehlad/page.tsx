@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { dueReminders, effectiveStatus, listJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
+import { dueReminders, effectiveStatus, listJobs, loadVisibleJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
 import { winStats } from "@/lib/crm/stats";
 
 /**
@@ -22,12 +22,14 @@ export default function Dashboard() {
   const [filter, setFilter] = useState<JobStatus | "vsetky">("vsetky");
 
   useEffect(() => {
-    function refresh() {
-      setJobs(listJobs());
+    setJobs(listJobs()); // rýchle lokálne zobrazenie
+    setDue(dueReminders());
+    async function sync() {
+      await restoreIfEmpty();
+      setJobs(await loadVisibleJobs()); // vlastné + party/firma podľa role
       setDue(dueReminders());
     }
-    refresh();
-    void restoreIfEmpty().then((r) => r.length > 0 && refresh());
+    void sync();
   }, []);
 
   const stats = useMemo(() => winStats(jobs), [jobs]);

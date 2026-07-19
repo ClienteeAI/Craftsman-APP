@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { crmSyncEnabled, listJobsServer, upsertJobServer } from "@/lib/crm/jobs-server";
+import { crmSyncEnabled, listVisibleJobsServer, upsertJobServer } from "@/lib/crm/jobs-server";
 import { currentUserId } from "@/lib/supabase/server";
 import type { Job } from "@/lib/crm/jobs";
 
@@ -14,7 +14,7 @@ export async function GET() {
   const userId = await currentUserId();
   if (!userId) return NextResponse.json({ synced: false, jobs: [] }, { status: 401 });
   try {
-    const jobs = await listJobsServer(userId);
+    const jobs = await listVisibleJobsServer(userId);
     return NextResponse.json({ synced: true, jobs }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
     console.error("[jobs GET]", err);

@@ -32,6 +32,26 @@ function rowToJob(r: Record<string, unknown>): Job {
     remindAt: (r.remind_at as string) ?? null,
     startAt: (r.start_at as string) ?? null,
     details: (r.details as Job["details"]) ?? null,
+    teamId: (r.team_id as string) ?? null,
+  };
+}
+
+/** Členská situácia používateľa — pre scopovanie čítania podľa role. */
+async function scope(
+  db: NonNullable<ReturnType<typeof getSupabase>>,
+  userId: string,
+): Promise<{ orgId: string | null; teamId: string | null; role: string; ledIds: string[] }> {
+  const { data: m } = await db
+    .from("memberships")
+    .select("org_id, team_id, role")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const { data: led } = await db.from("teams").select("id").eq("lead_id", userId);
+  return {
+    orgId: (m?.org_id as string) ?? null,
+    teamId: (m?.team_id as string) ?? null,
+    role: (m?.role as string) ?? "member",
+    ledIds: (led ?? []).map((r) => r.id as string),
   };
 }
 
@@ -44,9 +64,14 @@ export function crmSyncEnabled(): boolean {
 export async function upsertJobServer(job: Job, userId: string): Promise<void> {
   const db = getSupabase();
   if (!db) return;
+  // Priradenie do firmy/party: org podľa členstva, parta z zákazky alebo
+  // (keď nie je určená) z party tvorcu — nech zákazky člena vidí jeho šéf.
+  const s = await scope(db, userId);
   const { error } = await db.from("jobs").upsert({
     id: job.id,
     user_id: userId,
+    org_id: s.orgId,
+    team_id: job.teamId ?? s.teamId,
     created_at: job.createdAt,
     updated_at: job.updatedAt,
     status: job.status,
@@ -82,4 +107,42 @@ export async function listJobsServer(userId: string): Promise<Job[]> {
     .order("updated_at", { ascending: false });
   if (error) throw new Error(`Načítanie zálohy zlyhalo: ${error.message}`);
   return (data ?? []).map(rowToJob);
+}
+
+/**
+ * Zakázky viditeľné podľa role:
+ *   member → vlastné, lead → vlastné + jeho party, owner → celá firma.
+ * Cudzie zákazky sú readOnly (šéf/majiteľ ich vidí, needituje cez tohto klienta).
+ */
+export async function listVisibleJobsServer(userId: string): Promise<Job[]> {
+  const db = getSupabase();
+  if (!db) return [];
+  const s = await scope(db, userId);
+
+  let query = db.from("jobs").select("*");
+  if (s.role === "owner" && s.orgId) {
+    query = query.eq("org_id", s.orgId);
+  } else if (s.role === "lead" && s.ledIds.length) {
+    query = query.or(`user_id.eq.${userId},team_id.in.(${s.ledIds.join(",")})`);
+  } else {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query.order("updated_at", { ascending: false });
+  if (error) throw new Error(`Načítanie zákaziek zlyhalo: ${error.message}`);
+  return (data ?? []).map((r) => ({ ...rowToJob(r), readOnly: (r.user_id as string) !== userId }));
+}
+
+/** Jedna zakázka, keď ju používateľ smie vidieť podľa role. Inak null. */
+export async function getVisibleJobServer(id: string, userId: string): Promise<Job | null> {
+  const db = getSupabase();
+  if (!db) return null;
+  const { data, error } = await db.from("jobs").select("*").eq("id", id).maybeSingle();
+  if (error || !data) return null;
+  const s = await scope(db, userId);
+  const owns = (data.user_id as string) === userId;
+  const inOrg = s.role === "owner" && s.orgId && data.org_id === s.orgId;
+  const inLed = s.role === "lead" && s.ledIds.includes(data.team_id as string);
+  if (!owns && !inOrg && !inLed) return null;
+  return { ...rowToJob(data), readOnly: !owns };
 }

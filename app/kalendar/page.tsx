@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { createJob, listJobs, restoreIfEmpty, STATUS, updateJob, type Job } from "@/lib/crm/jobs";
+import { createJob, listJobs, loadVisibleJobs, restoreIfEmpty, STATUS, updateJob, type Job } from "@/lib/crm/jobs";
 
 /**
  * Kalendár zákaziek. „Kedy kam idem."
@@ -30,17 +30,22 @@ export default function Kalendar() {
   // Den, na který plánujeme (klik do kalendáře otevře okno).
   const [dayModal, setDayModal] = useState<Date | null>(null);
 
-  function refresh() {
-    const all = listJobs();
+  function apply(all: Job[]) {
     setAllJobs(all);
     setJobs(all.filter((j) => j.startAt));
+  }
+  async function refresh() {
+    apply(listJobs()); // okamžité lokálne
+    apply(await loadVisibleJobs()); // vlastné + party/firma podľa role
   }
 
   useEffect(() => {
     const now = new Date();
     setCursor({ y: now.getFullYear(), m: now.getMonth() });
-    refresh();
-    void restoreIfEmpty().then((r) => r.length > 0 && refresh());
+    void (async () => {
+      await restoreIfEmpty();
+      await refresh();
+    })();
   }, []);
 
   // Rozvrhne zákazky na jednotlivé dni (start + trvanie).

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { effectiveStatus, listJobs, restoreIfEmpty, STATUS, type Job } from "@/lib/crm/jobs";
+import { effectiveStatus, listJobs, loadVisibleJobs, restoreIfEmpty, STATUS, type Job } from "@/lib/crm/jobs";
 
 /**
  * Zákazníci — dlaždicový prehľad kontaktov.
@@ -26,11 +26,11 @@ export default function Zakaznici() {
   const [q, setQ] = useState("");
 
   useEffect(() => {
-    function refresh() {
-      setJobs(listJobs());
-    }
-    refresh();
-    void restoreIfEmpty().then((r) => r.length > 0 && refresh());
+    setJobs(listJobs());
+    void (async () => {
+      await restoreIfEmpty();
+      setJobs(await loadVisibleJobs());
+    })();
   }, []);
 
   const shown = useMemo(() => {

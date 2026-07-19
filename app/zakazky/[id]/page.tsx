@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { deleteJob, effectiveStatus, getJob, STATUS, updateJob, type Job, type JobStatus } from "@/lib/crm/jobs";
+import { deleteJob, effectiveStatus, getJob, getJobRemote, STATUS, updateJob, type Job, type JobStatus } from "@/lib/crm/jobs";
 import MarketingSection from "./marketing-section";
 import JobOffer from "./job-offer";
 import DetailsForm from "./details-form";
@@ -63,14 +63,30 @@ export default function ZakazkaDetail() {
   // co pomůže získat zakázku (naceniť / ozvať sa / zavolať).
   const [nudge, setNudge] = useState<Nudge | null>(null);
 
+  // Party (na priradenie zákazky). Načíta sa, keď je vrstva firmy dostupná.
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
+
   useEffect(() => {
-    const j = getJob(id);
-    if (!j) {
-      setNotFound(true);
-      return;
+    const local = getJob(id);
+    if (local) {
+      setJob(local);
+      void computeNudge(local).then(setNudge);
+    } else {
+      // Nie je lokálne — možno cudzia zákazka party/firmy (šéf/majiteľ). Zo servera.
+      void getJobRemote(id).then((remote) => {
+        if (remote) {
+          setJob(remote);
+          if (!remote.readOnly) void computeNudge(remote).then(setNudge);
+        } else {
+          setNotFound(true);
+        }
+      });
     }
-    setJob(j);
-    void computeNudge(j).then(setNudge);
+    // Party pre priradenie (len keď je firma nastavená).
+    void fetch("/api/org", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((b) => b?.teams && setTeams(b.teams.map((t: { id: string; name: string }) => ({ id: t.id, name: t.name }))))
+      .catch(() => {});
   }, [id]);
 
   if (notFound) {
@@ -89,6 +105,7 @@ export default function ZakazkaDetail() {
   if (!job) return null;
 
   function patch(p: Partial<Job>) {
+    if (job?.readOnly) return; // cudzia zákazka — len na čítanie
     const updated = updateJob(id, p);
     if (updated) setJob({ ...updated });
   }
@@ -141,16 +158,23 @@ export default function ZakazkaDetail() {
           ← Späť na zákazníkov
         </Link>
 
+        {job.readOnly && (
+          <p className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2.5 text-sm text-neutral-600">
+            👁 Zákazka inej party — vidíš ju ako šéf/majiteľ, ale needituje sa tu.
+          </p>
+        )}
+
         {/* Hlavička: meno + stav vľavo, akcia vpravo. */}
         <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <h1 className="text-3xl font-semibold tracking-tight">{job.customer.name ?? "Bez mena"}</h1>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               {(Object.keys(STATUS) as JobStatus[]).map((s) => (
                 <button
                   key={s}
+                  disabled={job.readOnly}
                   onClick={() => patch({ status: s })}
-                  className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                  className={`rounded-full border px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 ${
                     effectiveStatus(job) === s
                       ? "border-neutral-900 bg-neutral-900 text-white"
                       : "border-neutral-200 bg-white hover:bg-neutral-50"
@@ -159,14 +183,32 @@ export default function ZakazkaDetail() {
                   {STATUS[s].dot} {STATUS[s].label}
                 </button>
               ))}
+              {/* Priradenie k parte — keď je firma nastavená a zákazka je moja. */}
+              {!job.readOnly && teams.length > 0 && (
+                <select
+                  value={job.teamId ?? ""}
+                  onChange={(e) => patch({ teamId: e.target.value || null })}
+                  className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium outline-none focus:border-brand-500"
+                  title="Priradiť zákazku parte"
+                >
+                  <option value="">— bez party —</option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      🔨 {t.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
-          <Link
-            href={`/?zakazka=${job.id}`}
-            className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 active:opacity-90"
-          >
-            {job.shareUrl ? "Nová ponuka pre kontakt" : "Vytvoriť ponuku"}
-          </Link>
+          {!job.readOnly && (
+            <Link
+              href={`/?zakazka=${job.id}`}
+              className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-600 px-6 py-3 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 active:opacity-90"
+            >
+              {job.shareUrl ? "Nová ponuka pre kontakt" : "Vytvoriť ponuku"}
+            </Link>
+          )}
         </div>
 
         {/* Horní pruh: vlevo kontakt + odeslaná nabídka, vpravo poznámka + termíny. */}

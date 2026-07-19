@@ -45,6 +45,13 @@ export type Job = {
   startAt: string | null;
   /** Obsáhlé parametry zakázky (fakturace, technická střecha, prostupy…). */
   details: JobDetails | null;
+  /** Parta, ktorej zákazka patrí (vrstva firmy). null = nepriradená. */
+  teamId: string | null;
+  /**
+   * Len na čítanie — cudzia zákazka, ktorú vidí šéf party / majiteľ, ale needituje.
+   * Transient: neukládá se, dosazuje se při čtení ze serveru podľa vlastníka.
+   */
+  readOnly?: boolean;
 };
 
 /**
@@ -118,9 +125,14 @@ export async function restoreIfEmpty(): Promise<Job[]> {
     const res = await fetch("/api/jobs", { cache: "no-store" });
     if (!res.ok) return local;
     const body = await res.json();
-    if (body.synced && Array.isArray(body.jobs) && body.jobs.length > 0) {
-      write(body.jobs as Job[]);
-      return body.jobs as Job[];
+    if (body.synced && Array.isArray(body.jobs)) {
+      // Jen VLASTNÍ zakázky patří do localStorage. Cudzie (readOnly — vidí je
+      // šéf/majiteľ) sem nesmú, inak by sa pri záloze prepísali pod tento účet.
+      const own = (body.jobs as Job[]).filter((j) => !j.readOnly);
+      if (own.length > 0) {
+        write(own);
+        return own;
+      }
     }
   } catch {
     // Bez signálu prostě zůstaneme u prázdna — zkusí se to při dalším načtení.
@@ -128,13 +140,57 @@ export async function restoreIfEmpty(): Promise<Job[]> {
   return local;
 }
 
-export function listJobs(): Job[] {
-  // Novější nahoře, ale hotové a ztracené klesají dolů — majster řeší živé.
-  return read().sort((a, b) => {
+/** Řazení: živé nahoře, hotové/ztracené dolů, jinak nejnovější první. */
+export function sortJobs(jobs: Job[]): Job[] {
+  return [...jobs].sort((a, b) => {
     const dead = (j: Job) => (j.status === "hotovo" || j.status === "straceny" ? 1 : 0);
     if (dead(a) !== dead(b)) return dead(a) - dead(b);
     return b.updatedAt.localeCompare(a.updatedAt);
   });
+}
+
+export function listJobs(): Job[] {
+  return sortJobs(read());
+}
+
+/**
+ * Zakázky viditeľné podľa role — zlúčené s lokálnymi.
+ *
+ * Solo majster: server vráti jeho vlastné = to isté ako localStorage.
+ * Šéf party: navyše zákazky svojej party. Majiteľ: celej firmy.
+ *
+ * Lokálne zákazky vyhrávajú pre id, ktoré na tomto zariadení mám (moje čerstvé,
+ * možno ešte nezálohované úpravy). Server dopĺňa zvyšok — cudzie zákazky party/
+ * firmy, ktoré tu nemám; tie sú readOnly. Offline padne späť na lokálne.
+ */
+export async function loadVisibleJobs(): Promise<Job[]> {
+  if (typeof window === "undefined") return listJobs();
+  const local = read();
+  try {
+    const res = await fetch("/api/jobs", { cache: "no-store" });
+    if (!res.ok) return listJobs();
+    const body = await res.json();
+    if (!body.synced || !Array.isArray(body.jobs)) return listJobs();
+    const byId = new Map<string, Job>();
+    for (const j of body.jobs as Job[]) byId.set(j.id, j);
+    for (const j of local) byId.set(j.id, { ...j, readOnly: false });
+    return sortJobs([...byId.values()]);
+  } catch {
+    return listJobs();
+  }
+}
+
+/** Jedna zakázka zo servera (keď ju nemám lokálne — cudzia, len na čítanie). */
+export async function getJobRemote(id: string): Promise<Job | null> {
+  if (typeof window === "undefined") return null;
+  try {
+    const res = await fetch(`/api/jobs/${id}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body.job ? (body.job as Job) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function getJob(id: string): Job | undefined {
@@ -153,9 +209,9 @@ function shortId(): string {
 export function upsertJob(
   input: Omit<
     Job,
-    "id" | "createdAt" | "updatedAt" | "status" | "note" | "remindAt" | "startAt" | "details"
+    "id" | "createdAt" | "updatedAt" | "status" | "note" | "remindAt" | "startAt" | "details" | "teamId" | "readOnly"
   > &
-    Partial<Pick<Job, "status" | "id" | "details">>,
+    Partial<Pick<Job, "status" | "id" | "details" | "teamId">>,
 ): Job {
   const jobs = read();
   const now = new Date().toISOString();
@@ -193,6 +249,7 @@ export function upsertJob(
     remindAt: null,
     startAt: null,
     details: null,
+    teamId: null,
     ...input,
   };
   write([job, ...jobs]);
@@ -228,6 +285,7 @@ export function createJob(input: {
     remindAt: null,
     startAt: null,
     details: null,
+    teamId: null,
   };
   write([job, ...read()]);
   backup(job);

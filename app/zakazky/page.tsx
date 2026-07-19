@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { dueReminders, effectiveStatus, listJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
+import { dueReminders, effectiveStatus, listJobs, loadVisibleJobs, restoreIfEmpty, STATUS, type Job, type JobStatus } from "@/lib/crm/jobs";
 import { winStats, type WinStats } from "@/lib/crm/stats";
 import PushToggle from "../push-toggle";
 import FollowUpStrip from "../followup-strip";
@@ -21,19 +21,21 @@ export default function Zakazky() {
   const [filter, setFilter] = useState<JobStatus | "vsetky">("vsetky");
 
   // Sdílený refresh — volá ho i follow-up po odložení připomínky.
-  const refresh = useCallback(() => {
-    const j = listJobs();
-    setJobs(j);
+  const refresh = useCallback(async () => {
+    const local = listJobs(); // okamžité lokální
+    setJobs(local);
     setDue(dueReminders());
-    setStats(winStats(j));
+    setStats(winStats(local));
+    const vis = await loadVisibleJobs(); // vlastné + party/firma podľa role
+    setJobs(vis);
+    setStats(winStats(vis));
   }, []);
 
   useEffect(() => {
-    // Nejdřív lokální (okamžité), pak obnova z cloudu na prázdném zařízení.
-    refresh();
-    void restoreIfEmpty().then((restored) => {
-      if (restored.length > 0) refresh();
-    });
+    void (async () => {
+      await restoreIfEmpty();
+      void refresh();
+    })();
   }, [refresh]);
 
   const shown = filter === "vsetky" ? jobs : jobs.filter((j) => effectiveStatus(j) === filter);

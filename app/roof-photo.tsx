@@ -123,19 +123,19 @@ export default function RoofPhoto({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPhoto]);
 
-  /** Pošle nahoru galerii pro zákazníka: before + tašky + atmosférické varianty. */
+  /** Pošle nahoru galerii pro zákazníka: before + atmosférické varianty.
+   *
+   * Krytinu si vyberá MAJSTER — zákazník vidí len finálnu (hlavný render, cez
+   * onRendered). Preto sem tiles NEposielame: keby sme balili každú prezretú
+   * tašku do ponuky, zákazník by nimi krútil a každá by musela byť vygenerovaná
+   * navyše (peniaze). Takto sa generuje len to, čo majster reálne ukáže. */
   function emitGallery() {
     if (!onGallery) return;
     const variants = Array.from(variantCache.current.entries()).map(([key, v]) => ({
       key,
       url: v.dataUrl,
     }));
-    const tiles = Array.from(tileRenders.current.entries()).map(([key, v]) => ({
-      key,
-      label: v.label,
-      url: v.dataUrl,
-    }));
-    onGallery({ before: beforeDataUrl.current, variants, tiles });
+    onGallery({ before: beforeDataUrl.current, variants, tiles: [] });
   }
 
   async function render() {

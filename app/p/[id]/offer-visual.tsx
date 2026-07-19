@@ -22,12 +22,10 @@ export default function OfferVisual({
   before,
   afterDefault,
   variants,
-  tiles,
 }: {
   before: string | null;
   afterDefault: string;
   variants: { key: string; url: string }[];
-  tiles: { key: string; label: string; url: string }[];
 }) {
   const [after, setAfter] = useState(afterDefault);
   const [split, setSplit] = useState(50);
@@ -35,7 +33,8 @@ export default function OfferVisual({
   const dragging = useRef(false);
   const [hinted, setHinted] = useState(false);
 
-  const tileOpts = tiles.length > 1 ? tiles : [];
+  // Krytinu si vyberie majster pri tvorbe ponuky; zákazník vidí len finálnu
+  // (nekrútí variantami — ušetrí to generovanie navyše). Tu ostáva len atmosféra.
   const atmoOpts = variants.map((v) => ({ key: v.key, label: ATMO[v.key] ?? v.key, url: v.url }));
 
   // Nájezdová nápověda: předěl se jednou sám pohne, aby bylo jasné, že se táhne.
@@ -163,7 +162,6 @@ export default function OfferVisual({
         </p>
       )}
 
-      <Switcher title="Krytina" opts={tileOpts} />
       <Switcher title="Atmosféra" opts={atmoOpts} />
     </div>
   );

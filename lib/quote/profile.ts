@@ -9,6 +9,32 @@
 
 export type Money = number; // EUR
 
+/**
+ * Vlastní položka ceny práce. Majster má svých pár řádků nad rámec těch čtyř
+ * pevných (demontáž bleskosvodu, čištění, doprava…). Ukládají se v profilu,
+ * ať si je nastaví jednou a má je pořád po ruce.
+ */
+export type LabourItem = { id: string; label: string; unit: string; price: Money };
+
+/**
+ * Nastavení komunikace se zákazníkem. Šablony zpráv s proměnnými, ať majster
+ * neťuká pořád to samé. Proměnné se nahradí při odesílání:
+ *   {meno}   — křestní jméno zákazníka
+ *   {firma}  — název firmy majstra
+ *   {odkaz}  — odkaz na nabídku
+ *   {termin} — najbližší voľný termín
+ */
+export type Communication = {
+  /** E-mail, ze kterého/kterým majster posílá nabídky (může být stejný jako firemní). */
+  offerEmail: string;
+  /** Šablona pro WhatsApp / SMS. */
+  waTemplate: string;
+  /** Předmět e-mailu. */
+  emailSubject: string;
+  /** Tělo e-mailu. */
+  emailBody: string;
+};
+
 export type CraftsmanProfile = {
   company: { name: string; phone: string; email: string; logoUrl: string | null };
   /** Sazby za práci. Tohle apka vědět nemůže — liší se mezi majstry dvojnásobně. */
@@ -18,6 +44,8 @@ export type CraftsmanProfile = {
     perChimney: Money;
     perSkylight: Money;
   };
+  /** Vlastní řádky ceny práce navíc — majster si přidá, kolik chce. */
+  customLabour: LabourItem[];
   /** Ceny materiálu za jednotku. Bramac ceny nezveřejňuje → zadává je majster. */
   materialPrices: Record<string, Money>;
   /** Želaná ziskovosť zo zákazky v %. */
@@ -29,6 +57,25 @@ export type CraftsmanProfile = {
    * môže napísať "od polovice augusta" aj konkrétny dátum.
    */
   earliestTerm: string;
+  /** Šablony zpráv pro odesílání nabídek. */
+  communication: Communication;
+};
+
+/**
+ * Dosadí proměnné do šablony zprávy. Nahrazuje {meno}, {firma}, {odkaz}, {termin}.
+ * Nezadané proměnné se odstraní (radši prázdno než "{meno}" v SMS zákazníkovi).
+ */
+export function fillTemplate(tpl: string, vars: Record<string, string>): string {
+  return tpl.replace(/\{(\w+)\}/g, (_, key) => vars[key] ?? "");
+}
+
+/** Výchozí šablony komunikace — použije se, dokud si je majster nepřepíše. */
+export const DEFAULT_COMMUNICATION: Communication = {
+  offerEmail: "",
+  waTemplate: "Dobrý deň {meno}, posielam Vám cenovú ponuku na strechu: {odkaz}\n\n{firma}",
+  emailSubject: "Cenová ponuka na strechu — {firma}",
+  emailBody:
+    "Dobrý deň {meno},\n\nposielam Vám cenovú ponuku na strechu. Otvoríte ju cez tento odkaz:\n{odkaz}\n\nNajbližší voľný termín realizácie: {termin}\n\nV prípade otázok ma neváhajte kontaktovať.\n\n{firma}",
 };
 
 /**
@@ -53,6 +100,7 @@ export const DEFAULT_PROFILE: CraftsmanProfile = {
     perChimney: 190,
     perSkylight: 150,
   },
+  customLabour: [],
   materialPrices: {
     // Škridly sem NEPATŘÍ — ty mají ověřené ceny v lib/quote/pricelist.ts
     // z oficiálního ceníku výrobce. Tady zůstává jen materiál, na který
@@ -67,4 +115,5 @@ export const DEFAULT_PROFILE: CraftsmanProfile = {
   marginPct: 15,
   vatPct: 23, // SK
   earliestTerm: "",
+  communication: DEFAULT_COMMUNICATION,
 };

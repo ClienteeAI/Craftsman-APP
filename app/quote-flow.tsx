@@ -11,6 +11,7 @@ import { checkQuote, type CheckFinding } from "@/lib/quote/check";
 import { getJob, upsertJob } from "@/lib/crm/jobs";
 import type { JobDetails } from "@/lib/crm/job-details";
 import { loadProfile } from "@/lib/quote/profile-store";
+import { fillTemplate } from "@/lib/quote/profile";
 import { recomputeTotals, repriceItem } from "@/lib/quote/totals";
 import { deleteTemplate, listTemplates, saveTemplate, type Template } from "@/lib/quote/templates";
 import RoofPhoto from "./roof-photo";
@@ -604,6 +605,7 @@ Alebo prilep celý mail od zákazníka — appka z neho vytiahne meno, obec, tel
               sharing={sharing}
               onShare={share}
               customerPhone={customer.phone}
+              customerEmail={customer.email}
               customerName={customer.name}
               companyName={company}
               hasVideo={!!videoId}
@@ -1090,6 +1092,7 @@ function ShareBar({
   sharing,
   onShare,
   customerPhone,
+  customerEmail,
   customerName,
   companyName,
   hasVideo,
@@ -1099,6 +1102,7 @@ function ShareBar({
   sharing: boolean;
   onShare: () => void;
   customerPhone: string | null;
+  customerEmail: string | null;
   customerName: string | null;
   companyName: string;
   hasVideo: boolean;
@@ -1114,11 +1118,21 @@ function ShareBar({
   const id = url?.split("/p/")[1] ?? null;
   const chosenName = tiers?.find((t) => t.id === chosenTier)?.name ?? null;
 
+  // Šablony zpráv z profilu majstra (Nastavenie komunikácie). Dosadíme proměnné.
+  const comm = useMemo(() => loadProfile(), []);
+  const vars = {
+    meno: customerName ? customerName.split(" ")[0] : "",
+    firma: companyName,
+    odkaz: url ?? "",
+    termin: comm.earliestTerm || "podľa dohody",
+  };
   // Předvyplněná zpráva, kterou zákazník uvidí ve WhatsAppe/SMS.
-  const greeting = customerName ? `Dobrý deň ${customerName.split(" ")[0]}` : "Dobrý deň";
-  const message = url
-    ? `${greeting}, posielam Vám cenovú ponuku na strechu: ${url}\n\n${companyName}`
-    : "";
+  const message = url ? fillTemplate(comm.communication.waTemplate, vars) : "";
+  const emailSubject = url ? fillTemplate(comm.communication.emailSubject, vars) : "";
+  const emailBody = url ? fillTemplate(comm.communication.emailBody, vars) : "";
+  const mailHref = url
+    ? `mailto:${customerEmail ?? ""}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
+    : "#";
   const wa = customerPhone ? waNumber(customerPhone) : null;
 
   /**
@@ -1285,6 +1299,12 @@ function ShareBar({
             Poslať cez SMS
           </a>
         )}
+        <a
+          href={mailHref}
+          className="flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white py-3.5 text-base font-medium active:bg-neutral-100"
+        >
+          ✉️ Poslať e-mailom
+        </a>
       </div>
 
       {/* Odkaz + kopírovat pro případ, že chce poslat jinudy (mail, Messenger…). */}

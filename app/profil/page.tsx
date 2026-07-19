@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { DEFAULT_PROFILE, type CraftsmanProfile } from "@/lib/quote/profile";
+import { DEFAULT_PROFILE, type CraftsmanProfile, type LabourItem } from "@/lib/quote/profile";
 import { loadProfile, restoreProfileIfMissing, saveProfile } from "@/lib/quote/profile-store";
 import { authConfigured, createClient } from "@/lib/supabase/browser";
 
@@ -15,6 +15,18 @@ import { authConfigured, createClient } from "@/lib/supabase/browser";
  * Nastaví se JEDNOU a od té chvíle se každá nabídka počítá sama. To je celý
  * ten produkt: apka nezná jeho ceny, ale zapamatuje si je.
  */
+/** Proměnné použitelné v šablonách zpráv — zobrazí se jako nápověda. */
+const VARS = [
+  { key: "meno", desc: "meno zákazníka" },
+  { key: "firma", desc: "tvoja firma" },
+  { key: "odkaz", desc: "odkaz na ponuku" },
+  { key: "termin", desc: "voľný termín" },
+];
+
+function newLabourId(): string {
+  return "lab-" + Math.random().toString(36).slice(2, 9);
+}
+
 export default function Profil() {
   // Vycházíme z výchozích hodnot, ne z null. Kdyby se čekalo na useEffect,
   // vyrenderuje server prázdno a majster kouká na bílou obrazovku, než se
@@ -82,6 +94,11 @@ export default function Profil() {
           <Num label="Len pokládka krytiny" unit="€/m²" value={p.labour.perM2Covering} onChange={(v) => update({ labour: { ...p.labour, perM2Covering: v } })} />
           <Num label="Napojenie na komín" unit="€/ks" value={p.labour.perChimney} onChange={(v) => update({ labour: { ...p.labour, perChimney: v } })} />
           <Num label="Osadenie strešného okna" unit="€/ks" value={p.labour.perSkylight} onChange={(v) => update({ labour: { ...p.labour, perSkylight: v } })} />
+
+          <CustomLabour
+            items={p.customLabour}
+            onChange={(customLabour) => update({ customLabour })}
+          />
         </Section>
 
         <Section title="Zisk a DPH">
@@ -98,6 +115,52 @@ export default function Profil() {
             value={p.earliestTerm}
             onChange={(v) => update({ earliestTerm: v })}
           />
+        </Section>
+
+        <Section title="Nastavenie komunikácie">
+          <p className="-mt-1 mb-1 text-xs leading-relaxed text-neutral-400">
+            Predpripravené správy, ktoré appka vyplní pri odosielaní ponuky. Do textu môžeš
+            vložiť premenné a doplnia sa samy:
+          </p>
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {VARS.map((v) => (
+              <span key={v.key} className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                <code className="text-brand-700">{`{${v.key}}`}</code> {v.desc}
+              </span>
+            ))}
+          </div>
+
+          <Field
+            label="E-mail na odosielanie ponúk"
+            type="email"
+            value={p.communication.offerEmail}
+            onChange={(v) => update({ communication: { ...p.communication, offerEmail: v } })}
+          />
+
+          <TextArea
+            label="Správa cez WhatsApp / SMS"
+            value={p.communication.waTemplate}
+            rows={4}
+            onChange={(v) => update({ communication: { ...p.communication, waTemplate: v } })}
+          />
+
+          <Field
+            label="Predmet e-mailu"
+            value={p.communication.emailSubject}
+            onChange={(v) => update({ communication: { ...p.communication, emailSubject: v } })}
+          />
+          <TextArea
+            label="Text e-mailu"
+            value={p.communication.emailBody}
+            rows={7}
+            onChange={(v) => update({ communication: { ...p.communication, emailBody: v } })}
+          />
+
+          <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+            Pozn.: v SMS aj WhatsApp musí byť odkaz vypísaný ako text — schovať ho pod klikacie
+            slovo sa v týchto kanáloch technicky nedá. „Klikacie slovo“ ide iba v e-maile
+            posielanom cez server; to vieme doplniť neskôr.
+          </p>
         </Section>
 
         {authConfigured() && (
@@ -151,12 +214,12 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-xs text-neutral-400">{label}</span>
+      <span className="text-xs font-medium text-neutral-500">{label}</span>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-base outline-none focus:border-brand-500"
+        className="mt-1 w-full rounded-lg border-2 border-neutral-300 bg-white px-3 py-2.5 text-base shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
       />
     </label>
   );
@@ -186,11 +249,103 @@ function Num({
             if (Number.isFinite(n)) onChange(n);
             else if (e.target.value === "") onChange(0);
           }}
-          className="w-24 rounded-lg border border-neutral-200 px-3 py-2.5 text-right text-base tabular-nums outline-none focus:border-brand-500"
+          className="w-24 rounded-lg border-2 border-neutral-300 bg-white px-3 py-2.5 text-right text-base tabular-nums shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
         />
         <span className="w-10 text-sm text-neutral-400">{unit}</span>
       </span>
     </label>
+  );
+}
+
+/** Víceřádkový vstup — pro šablony zpráv. Stejný „je vidět" styl jako ostatní. */
+function TextArea({
+  label,
+  value,
+  onChange,
+  rows = 4,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+  hint?: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="text-xs font-medium text-neutral-500">{label}</span>
+      <textarea
+        value={value}
+        rows={rows}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full resize-none rounded-lg border-2 border-neutral-300 bg-white px-3 py-2.5 text-base leading-relaxed shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+      />
+      {hint && <span className="mt-1 block text-xs text-neutral-400">{hint}</span>}
+    </label>
+  );
+}
+
+/**
+ * Vlastní řádky ceny práce. Majster si přidá, kolik chce; každý má název,
+ * cenu a jednotku. Ukládají se v profilu spolu se zbytkem.
+ */
+function CustomLabour({
+  items,
+  onChange,
+}: {
+  items: LabourItem[];
+  onChange: (items: LabourItem[]) => void;
+}) {
+  function set(id: string, patch: Partial<LabourItem>) {
+    onChange(items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+  }
+  function add() {
+    onChange([...items, { id: newLabourId(), label: "", unit: "€/ks", price: 0 }]);
+  }
+  function remove(id: string) {
+    onChange(items.filter((it) => it.id !== id));
+  }
+
+  return (
+    <div className="space-y-2 border-t border-black/5 pt-3">
+      {items.map((it) => (
+        <div key={it.id} className="flex items-center gap-2">
+          <input
+            value={it.label}
+            placeholder="Napr. Demontáž bleskozvodu"
+            onChange={(e) => set(it.id, { label: e.target.value })}
+            className="min-w-0 flex-1 rounded-lg border-2 border-neutral-300 bg-white px-3 py-2.5 text-[15px] shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+          />
+          <input
+            inputMode="decimal"
+            value={it.price}
+            onChange={(e) => {
+              const n = parseFloat(e.target.value.replace(",", "."));
+              set(it.id, { price: Number.isFinite(n) ? n : 0 });
+            }}
+            className="w-20 rounded-lg border-2 border-neutral-300 bg-white px-2.5 py-2.5 text-right text-base tabular-nums shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+          />
+          <input
+            value={it.unit}
+            onChange={(e) => set(it.id, { unit: e.target.value })}
+            className="w-16 rounded-lg border-2 border-neutral-300 bg-white px-2 py-2.5 text-center text-sm text-neutral-500 shadow-soft outline-none transition hover:border-neutral-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+          />
+          <button
+            onClick={() => remove(it.id)}
+            aria-label="Odstrániť položku"
+            className="shrink-0 rounded-lg px-2 py-2 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      <button
+        onClick={add}
+        className="w-full rounded-lg border-2 border-dashed border-neutral-300 py-2.5 text-sm font-medium text-neutral-500 transition hover:border-brand-400 hover:text-brand-700"
+      >
+        + Pridať vlastnú položku
+      </button>
+    </div>
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { DEFAULT_PROFILE, type CraftsmanProfile } from "./profile";
+import { DEFAULT_COMMUNICATION, DEFAULT_PROFILE, type CraftsmanProfile } from "./profile";
 
 /**
  * Profil majstra na jeho telefonu.
@@ -27,7 +27,9 @@ export function loadProfile(): CraftsmanProfile {
       ...saved,
       company: { ...DEFAULT_PROFILE.company, ...(saved.company ?? {}) },
       labour: { ...DEFAULT_PROFILE.labour, ...(saved.labour ?? {}) },
+      customLabour: Array.isArray(saved.customLabour) ? saved.customLabour : [],
       materialPrices: { ...DEFAULT_PROFILE.materialPrices, ...(saved.materialPrices ?? {}) },
+      communication: { ...DEFAULT_COMMUNICATION, ...(saved.communication ?? {}) },
     };
   } catch {
     return DEFAULT_PROFILE;

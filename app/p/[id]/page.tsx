@@ -7,6 +7,7 @@ import TierVote from "./tier-vote";
 import SignOffer from "./sign-offer";
 import MasterVideo from "./master-video";
 import Reveal from "./reveal";
+import ShareOffer from "./share-offer";
 
 /**
  * Nabídka pro zákazníka. Odkaz místo PDF.
@@ -135,6 +136,11 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
             </div>
           </section>
         )}
+        </Reveal>
+
+        {/* Rozhodujú sa spolu — pošli ponuku blízkym (manželke). */}
+        <Reveal>
+          <ShareOffer name={q.customer.name} />
         </Reveal>
 
         {/* Odhad dĺžky realizácie — zákazník chce vedieť, „ako dlho to bude trvať". */}

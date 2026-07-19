@@ -331,6 +331,15 @@ export default function RoofPhoto({
 
       {photoUrl && phase !== "done" && (
         <div className="p-5">
+          {/* Jasný návod — bez neho užívateľ nevie, čo má robiť. */}
+          <div className="mb-3 flex items-start gap-2.5 rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
+            <span className="text-base leading-none">👆</span>
+            <span>
+              <span className="font-semibold">Prstom obtiahnite strechu</span>, ktorej meníte krytinu —
+              prejdite po celej ploche. Appka na označené miesto dokreslí novú strechu.
+            </span>
+          </div>
+
           <div className="relative inline-block max-w-full select-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -356,7 +365,7 @@ export default function RoofPhoto({
 
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <label className="flex items-center gap-2 text-xs text-neutral-400">
-              Štetec
+              Hrúbka štetca
               <input type="range" min={12} max={120} value={brush} onChange={(e) => setBrush(+e.target.value)} />
             </label>
             <button
@@ -366,8 +375,12 @@ export default function RoofPhoto({
             >
               {phase === "rendering" ? "Kreslím strechu…" : "Ukázať novú strechu"}
             </button>
-            <span className="text-xs text-neutral-400">
-              {hasMask ? "" : "Prejdi prstom po streche"}
+            <span className="text-xs">
+              {hasMask ? (
+                <span className="font-medium text-brand-700">✓ Strecha označená</span>
+              ) : (
+                <span className="text-neutral-400">Najprv prstom označ strechu</span>
+              )}
             </span>
           </div>
 

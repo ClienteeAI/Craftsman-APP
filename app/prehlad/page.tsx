@@ -106,6 +106,9 @@ export default function Dashboard() {
             <Link href="/firma" className="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-900">
               Firma
             </Link>
+            <Link href="/posta" className="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-500 transition hover:text-neutral-900">
+              Pošta
+            </Link>
           </nav>
 
           <Link

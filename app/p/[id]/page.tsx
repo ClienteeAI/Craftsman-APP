@@ -5,6 +5,8 @@ import InterestButtons from "./interest-buttons";
 import OfferVisual from "./offer-visual";
 import TierVote from "./tier-vote";
 import SignOffer from "./sign-offer";
+import MasterVideo from "./master-video";
+import Reveal from "./reveal";
 
 /**
  * Nabídka pro zákazníka. Odkaz místo PDF.
@@ -69,6 +71,9 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
           )}
         </header>
 
+        {/* Videopozdrav majstra ako kruh — tvár človeka je najsilnejší prvý dojem. */}
+        {q.videoId && <MasterVideo videoId={q.videoId} />}
+
         <h1
           className="mt-8 text-[2rem] font-semibold leading-[1.15] tracking-tight sm:text-4xl"
           style={{ animation: "fadeInUp 0.5s ease both" }}
@@ -76,20 +81,6 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
           {q.customer.name ? `${q.customer.name.split(" ")[0]}, takto` : "Takto"} by mohla vyzerať
           vaša strecha
         </h1>
-
-        {/* Video pozdrav majstra. Načítá se z /api/video/[id] s Range podporou —
-            preto ho prehliadač (aj Safari) prehrá. Nad vizualizaci: tvár človeka
-            je silnejší prvý dojem než render. */}
-        {q.videoId && (
-          // eslint-disable-next-line jsx-a11y/media-has-caption
-          <video
-            src={`/api/video/${q.videoId}`}
-            controls
-            playsInline
-            preload="metadata"
-            className="mt-6 w-full rounded-2xl bg-black"
-          />
-        )}
 
         {/* Vizualizace jeho baráku — interaktivní: posuvník před/po + přepínač
             atmosféry. Tohle je ten rozdíl proti tabulce v PDF. */}
@@ -102,6 +93,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
           />
         )}
 
+        <Reveal>
         {q.tiers.length > 0 ? (
           <>
             <TierVote id={q.id} tiers={q.tiers} initialChosen={q.chosenTier} />
@@ -115,41 +107,48 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
             )}
           </>
         ) : (
-          <section className="mt-6 rounded-2xl border border-neutral-200/70 bg-card shadow-soft p-6">
-            <p className="text-xs uppercase tracking-widest text-neutral-400">Orientačná cena</p>
-            <p className="mt-1 text-4xl font-semibold tracking-tight">
-              {eur(q.range.from)} – {eur(q.range.to)}
-            </p>
-            <p className="mt-1 text-sm text-neutral-500">
-              bez DPH · {eur(q.totals.totalIncVat)} s DPH
-            </p>
-            <p className="mt-4 text-[15px] leading-relaxed text-neutral-600">
-              {q.tierName} — {q.productName}
-            </p>
-            {q.earliestTerm && (
-              <div className="mt-4 flex items-center gap-2 border-t border-neutral-100 pt-4">
-                <span className="text-neutral-400">📅</span>
-                <span className="text-[15px]">
-                  Najbližší voľný termín:{" "}
-                  <span className="font-medium">{q.earliestTerm}</span>
-                </span>
-              </div>
-            )}
+          <section className="mt-6 overflow-hidden rounded-2xl border border-neutral-200/70 bg-card shadow-soft">
+            <div className="border-l-4 border-brand-500 p-6">
+              <p className="text-xs font-semibold uppercase tracking-widest text-brand-700">Orientačná cena</p>
+              <p className="mt-1 text-[2.6rem] font-semibold leading-none tracking-tight text-neutral-900 sm:text-5xl">
+                {eur(q.range.from)}
+                <span className="text-neutral-400"> – </span>
+                {eur(q.range.to)}
+              </p>
+              <p className="mt-2 text-sm text-neutral-500">
+                bez DPH · <span className="font-medium text-neutral-700">{eur(q.totals.totalIncVat)}</span> s DPH
+              </p>
+            </div>
+            <div className="px-6 pb-6">
+              <p className="text-[15px] leading-relaxed text-neutral-600">
+                {q.tierName} — {q.productName}
+              </p>
+              {q.earliestTerm && (
+                <div className="mt-4 flex items-center gap-2 border-t border-neutral-100 pt-4">
+                  <span className="text-neutral-400">📅</span>
+                  <span className="text-[15px]">
+                    Najbližší voľný termín:{" "}
+                    <span className="font-medium">{q.earliestTerm}</span>
+                  </span>
+                </div>
+              )}
+            </div>
           </section>
         )}
+        </Reveal>
 
         {/* Odhad dĺžky realizácie — zákazník chce vedieť, „ako dlho to bude trvať". */}
         {duration && (
-          <div className="mt-4 flex items-center gap-2.5 rounded-2xl border border-neutral-200/70 bg-card p-5 shadow-soft">
+          <Reveal className="mt-4 flex items-center gap-2.5 rounded-2xl border border-neutral-200/70 bg-card p-5 shadow-soft">
             <span className="text-neutral-400">⏱️</span>
             <span className="text-[15px]">
               Realizácia trvá <span className="font-medium">{duration}</span>{" "}
               <span className="text-neutral-400">(orientačne, upresní sa po zameraní)</span>
             </span>
-          </div>
+          </Reveal>
         )}
 
-        <section className="mt-4 overflow-hidden rounded-2xl border border-neutral-200/70 bg-card shadow-soft">
+        <Reveal className="mt-4 block overflow-hidden rounded-2xl border border-neutral-200/70 bg-card shadow-soft">
           <div className="border-b border-neutral-100 p-5">
             <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
               Čo je v cene
@@ -191,7 +190,7 @@ export default async function PublicQuote({ params }: { params: Promise<{ id: st
               <span className="tabular-nums">{eur(q.totals.totalExVat)}</span>
             </div>
           </div>
-        </section>
+        </Reveal>
 
         {/* Poctivost prodává. Zákazník, který vidí, co je odhad, věří zbytku. */}
         <p className="mt-5 text-xs leading-relaxed text-neutral-400">

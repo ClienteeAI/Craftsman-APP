@@ -74,25 +74,31 @@ export default function OfferVisual({
     dragging.current = false;
   }
 
+  // Náhledové dlaždice — každá ukáže reálny obrázok tej krytiny/atmosféry.
   function Switcher({ title, opts }: { title: string; opts: { key: string; label: string; url: string }[] }) {
     if (opts.length === 0) return null;
     return (
-      <div className="mt-4">
+      <div className="mt-5">
         <p className="mb-2 text-xs font-medium uppercase tracking-wider text-neutral-400">{title}</p>
-        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {opts.map((o) => (
-            <button
-              key={o.key}
-              onClick={() => setAfter(o.url)}
-              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-medium transition ${
-                after === o.url
-                  ? "bg-neutral-900 text-white shadow-soft"
-                  : "border border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
-              }`}
-            >
-              {o.label}
-            </button>
-          ))}
+        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+          {opts.map((o) => {
+            const active = after === o.url;
+            return (
+              <button key={o.key} onClick={() => setAfter(o.url)} className="shrink-0 text-center">
+                <div
+                  className={`h-[68px] w-[68px] overflow-hidden rounded-2xl border-2 transition ${
+                    active ? "border-brand-600 shadow-lift" : "border-transparent opacity-80"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={o.url} alt={o.label} className="h-full w-full object-cover" draggable={false} />
+                </div>
+                <span className={`mt-1.5 block text-xs ${active ? "font-semibold text-neutral-800" : "text-neutral-500"}`}>
+                  {o.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -108,7 +114,7 @@ export default function OfferVisual({
           onPointerUp={onUp}
           onPointerCancel={onUp}
           style={{ touchAction: "pan-y" }}
-          className="relative cursor-ew-resize select-none overflow-hidden rounded-3xl border border-neutral-200/70 shadow-lift"
+          className="relative -mx-5 cursor-ew-resize select-none overflow-hidden border-y border-neutral-200/70 shadow-lift sm:mx-0 sm:rounded-3xl sm:border"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={before} alt="Pôvodná strecha" className="block w-full" draggable={false} />

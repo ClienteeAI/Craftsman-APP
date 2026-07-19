@@ -6,6 +6,34 @@ import type { RoofFinding } from "@/lib/quote/inspect";
 type Phase = "empty" | "masking" | "rendering" | "done" | "error";
 
 /**
+ * Zmenší fotku už v prohlížeči, než ji pošleme na server.
+ *
+ * Fotka z telefonu má klidně 5–12 MB. Vercel má limit 4,5 MB na request →
+ * velká fotka by tělo přeteklo a server hlásí „Failed to parse body as FormData".
+ * Zmenšíme na max 1600 px (server ji stejně dál zmenšuje) a uložíme jako JPEG.
+ * imageOrientation: from-image srovná EXIF rotaci, ať render není na boku.
+ */
+async function downscalePhoto(file: File, maxPx = 1600): Promise<File> {
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+    const scale = Math.min(1, maxPx / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * scale);
+    const h = Math.round(bmp.height * scale);
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bmp, 0, 0, w, h);
+    bmp.close?.();
+    const blob: Blob | null = await new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.85));
+    return blob ? new File([blob], "photo.jpg", { type: "image/jpeg" }) : file;
+  } catch {
+    return file; // keď sa nepodarí, pošli originál — nech to aspoň skúsi
+  }
+}
+
+/**
  * Vizualizace střechy uvnitř nabídky.
  *
  * Produkt se NEVYBÍRÁ — apka ho už zná z toho, co majster nadiktoval.
@@ -117,11 +145,14 @@ export default function RoofPhoto({
   useEffect(() => {
     if (initialPhoto && loadedPhoto.current !== initialPhoto) {
       loadedPhoto.current = initialPhoto;
-      setPhotoFile(initialPhoto);
-      setPhotoUrl(URL.createObjectURL(initialPhoto));
-      setPhase("masking");
-      setHasMask(false);
-      void inspect(initialPhoto);
+      void (async () => {
+        const small = await downscalePhoto(initialPhoto);
+        setPhotoFile(small);
+        setPhotoUrl(URL.createObjectURL(small));
+        setPhase("masking");
+        setHasMask(false);
+        void inspect(small);
+      })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPhoto]);
@@ -281,16 +312,18 @@ export default function RoofPhoto({
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={(e) => {
+            onChange={async (e) => {
               const f = e.target.files?.[0];
               if (!f) return;
-              setPhotoFile(f);
-              setPhotoUrl(URL.createObjectURL(f));
+              // Zmenšíme fotku hneď — nech upload nepretečie limit (Vercel 4,5 MB).
+              const small = await downscalePhoto(f);
+              setPhotoFile(small);
+              setPhotoUrl(URL.createObjectURL(small));
               setPhase("masking");
               setHasMask(false);
               // Diagnóza běží na pozadí, hned po výběru — než majster domaluje
               // masku, má na obrazovce, co na střeše je.
-              void inspect(f);
+              void inspect(small);
             }}
           />
         </label>

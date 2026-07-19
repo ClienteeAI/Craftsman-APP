@@ -45,6 +45,35 @@ export function saveProfile(p: CraftsmanProfile): void {
   backup(p);
 }
 
+/**
+ * Profil pre VÝPOČET ceny — firemný cenník s výnimkami party.
+ *
+ * Rozhodnutie majiteľa: firma má cenník, ale parta si smie prepísať sadzby.
+ * Keď majster patrí do party s výnimkami (teams.labour_overrides), tie prebijú
+ * firemné sadzby práce. Bez vrstvy firmy / bez výnimiek = obyčajný profil.
+ */
+export async function loadPricingProfile(): Promise<CraftsmanProfile> {
+  const p = loadProfile();
+  if (typeof window === "undefined") return p;
+  try {
+    const res = await fetch("/api/org", { cache: "no-store" });
+    if (!res.ok) return p;
+    const b = await res.json();
+    if (!b.enabled || !b.myTeamId || !Array.isArray(b.teams)) return p;
+    const team = b.teams.find((t: { id: string }) => t.id === b.myTeamId);
+    const ov = team?.labourOverrides as Partial<CraftsmanProfile["labour"]> | null | undefined;
+    if (!ov) return p;
+    // Len skutočne zadané sadzby prebíjajú; prázdne parta dedí z firmy.
+    const clean: Partial<CraftsmanProfile["labour"]> = {};
+    for (const [k, v] of Object.entries(ov)) {
+      if (typeof v === "number" && Number.isFinite(v)) clean[k as keyof CraftsmanProfile["labour"]] = v;
+    }
+    return { ...p, labour: { ...p.labour, ...clean } };
+  } catch {
+    return p;
+  }
+}
+
 /** Nastavil si už majster svoje sazby, nebo pořád jede na mých odhadech? */
 export function isConfigured(): boolean {
   if (typeof window === "undefined") return false;

@@ -10,7 +10,7 @@ import type { TierId, TieredQuote } from "@/lib/quote/tiers";
 import { checkQuote, type CheckFinding } from "@/lib/quote/check";
 import { getJob, upsertJob } from "@/lib/crm/jobs";
 import type { JobDetails } from "@/lib/crm/job-details";
-import { loadProfile } from "@/lib/quote/profile-store";
+import { loadPricingProfile, loadProfile } from "@/lib/quote/profile-store";
 import { fillTemplate } from "@/lib/quote/profile";
 import { buildOfferEmailHtml, buildOfferEmailText } from "@/lib/email/offer-template";
 import { recomputeTotals, repriceItem } from "@/lib/quote/totals";
@@ -154,7 +154,8 @@ export default function QuoteFlow({ company }: { company: string }) {
       const res = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: text, profile: loadProfile() }),
+        // Cenník s výnimkami party (keď majster do party patrí).
+        body: JSON.stringify({ transcript: text, profile: await loadPricingProfile() }),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error);

@@ -1508,6 +1508,17 @@ function FollowUps({
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const set = (field: string, value: string) => setAnswers((a) => ({ ...a, [field]: value }));
+  // Rozsah prác (scope) je viacnásobný — mení sa naraz krytina, latovanie, fólia,
+  // krov… Tlačidlá preto prepínajú (toggle), nie nahrádzajú. Backend víc hodnot
+  // parsuje z textu, takže stačí ich spojiť čiarkou.
+  const isMulti = (field: string) => /scope|rozsah/i.test(field);
+  const parts = (v: string | undefined) => (v ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const toggle = (field: string, o: string) =>
+    setAnswers((a) => {
+      const cur = parts(a[field]);
+      const next = cur.includes(o) ? cur.filter((x) => x !== o) : [...cur, o];
+      return { ...a, [field]: next.join(", ") };
+    });
 
   const allAnswered = followUps.every((f) => answers[f.field]?.trim());
 
@@ -1520,24 +1531,32 @@ function FollowUps({
       <div className="mt-4 space-y-5">
         {followUps.map((f) => (
           <div key={f.field}>
-            <p className="text-[15px]">{f.question}</p>
+            <p className="text-[15px]">
+              {f.question}
+              {isMulti(f.field) && <span className="ml-1 text-sm text-neutral-400">(môžeš vybrať viac)</span>}
+            </p>
 
-            {/* Rychlá volba — ťuknutí vyplní pole. */}
+            {/* Rychlá volba — ťuknutí vyplní pole. Pri rozsahu prác sa dá vybrať viac. */}
             {f.options && f.options.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
-                {f.options.map((o) => (
-                  <button
-                    key={o}
-                    onClick={() => set(f.field, o)}
-                    className={`rounded-lg border px-4 py-2 text-sm font-medium ${
-                      answers[f.field] === o
-                        ? "border-brand-600 bg-brand-600 text-white"
-                        : "border-neutral-300 active:bg-neutral-100"
-                    }`}
-                  >
-                    {o}
-                  </button>
-                ))}
+                {f.options.map((o) => {
+                  const multi = isMulti(f.field);
+                  const selected = multi ? parts(answers[f.field]).includes(o) : answers[f.field] === o;
+                  return (
+                    <button
+                      key={o}
+                      onClick={() => (multi ? toggle(f.field, o) : set(f.field, o))}
+                      className={`rounded-lg border px-4 py-2 text-sm font-medium ${
+                        selected
+                          ? "border-brand-600 bg-brand-600 text-white"
+                          : "border-neutral-300 active:bg-neutral-100"
+                      }`}
+                    >
+                      {multi && selected ? "✓ " : ""}
+                      {o}
+                    </button>
+                  );
+                })}
               </div>
             )}
 

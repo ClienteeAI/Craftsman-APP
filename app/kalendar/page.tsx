@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { listJobs, restoreIfEmpty, STATUS, type Job } from "@/lib/crm/jobs";
+import { createJob, listJobs, restoreIfEmpty, STATUS, updateJob, type Job } from "@/lib/crm/jobs";
 
 /**
  * Kalendár zákaziek. „Kedy kam idem."
@@ -25,14 +25,20 @@ function startOfDay(d: Date) {
 
 export default function Kalendar() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [cursor, setCursor] = useState({ y: 0, m: 0 });
+  // Den, na který plánujeme (klik do kalendáře otevře okno).
+  const [dayModal, setDayModal] = useState<Date | null>(null);
+
+  function refresh() {
+    const all = listJobs();
+    setAllJobs(all);
+    setJobs(all.filter((j) => j.startAt));
+  }
 
   useEffect(() => {
     const now = new Date();
     setCursor({ y: now.getFullYear(), m: now.getMonth() });
-    function refresh() {
-      setJobs(listJobs().filter((j) => j.startAt));
-    }
     refresh();
     void restoreIfEmpty().then((r) => r.length > 0 && refresh());
   }, []);
@@ -124,14 +130,24 @@ export default function Kalendar() {
                 const items = byDay.get(key) ?? [];
                 const isToday = key === todayKey;
                 return (
-                  <div key={i} className="min-h-24 border-b border-r border-neutral-50 p-1.5">
-                    <div className={`mb-1 text-right text-xs ${isToday ? "font-bold text-brand-700" : "text-neutral-400"}`}>
+                  <div
+                    key={i}
+                    onClick={() => setDayModal(date)}
+                    className="group min-h-24 cursor-pointer border-b border-r border-neutral-50 p-1.5 transition hover:bg-brand-50/40"
+                  >
+                    <div className={`mb-1 flex items-center justify-between text-xs ${isToday ? "font-bold text-brand-700" : "text-neutral-400"}`}>
+                      {/* Tichý „+" na hover — napoví, že sa dá klepnúť a naplánovať. */}
+                      <span className="opacity-0 transition group-hover:opacity-100" aria-hidden>
+                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[11px] leading-none text-white">
+                          +
+                        </span>
+                      </span>
                       {isToday ? (
                         <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-white">
                           {date.getDate()}
                         </span>
                       ) : (
-                        date.getDate()
+                        <span>{date.getDate()}</span>
                       )}
                     </div>
                     <div className="space-y-1">
@@ -139,6 +155,7 @@ export default function Kalendar() {
                         <Link
                           key={n}
                           href={`/zakazky/${job.id}`}
+                          onClick={(e) => e.stopPropagation()}
                           className={`block truncate rounded px-1.5 py-0.5 text-[11px] font-medium ${
                             isStart ? "bg-brand-600 text-white" : "bg-brand-100 text-brand-800"
                           }`}
@@ -187,6 +204,184 @@ export default function Kalendar() {
           </aside>
         </div>
       </div>
+
+      {dayModal && (
+        <DayModal
+          date={dayModal}
+          jobs={allJobs}
+          onClose={() => setDayModal(null)}
+          onSaved={() => {
+            refresh();
+            setDayModal(null);
+          }}
+        />
+      )}
     </main>
+  );
+}
+
+/**
+ * Okno pri kliknutí na deň: naplánovať realizáciu na tento dátum.
+ * Buď priradí existujúci kontakt, alebo rovno založí nový a naplánuje ho.
+ * V oboch prípadoch nastaví termín (startAt) a stav na „realizácia".
+ */
+function DayModal({
+  date,
+  jobs,
+  onClose,
+  onSaved,
+}: {
+  date: Date;
+  jobs: Job[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [mode, setMode] = useState<"existing" | "new">(jobs.length > 0 ? "existing" : "new");
+  const [pickId, setPickId] = useState<string>(jobs[0]?.id ?? "");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [obec, setObec] = useState("");
+  const [days, setDays] = useState(1);
+
+  // Poludnie zvoleného dňa — vyhne sa posunom cez časové pásma.
+  const iso = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12).toISOString();
+  const pretty = date.toLocaleDateString("sk-SK", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+
+  function saveExisting() {
+    if (!pickId) return;
+    const picked = jobs.find((j) => j.id === pickId);
+    // Detaily MERGUJEME, ať plánování nesmaže ostatní pole zakázky.
+    updateJob(pickId, {
+      startAt: iso,
+      status: "realizacia",
+      details: { ...(picked?.details ?? {}), durationDays: days },
+    });
+    onSaved();
+  }
+  function saveNew() {
+    const job = createJob({ customer: { name: name || null, obec: obec || null, phone: phone || null, email: null } });
+    updateJob(job.id, { startAt: iso, status: "realizacia", details: { durationDays: days } });
+    onSaved();
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-t-3xl bg-card p-6 shadow-lift sm:rounded-3xl"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">Naplánovať realizáciu</h2>
+            <p className="mt-0.5 text-sm capitalize text-neutral-500">{pretty}</p>
+          </div>
+          <button onClick={onClose} aria-label="Zavrieť" className="rounded-lg px-2 py-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700">
+            ✕
+          </button>
+        </div>
+
+        {/* Prepínač: existujúci vs nový kontakt. */}
+        <div className="mt-4 flex gap-1 rounded-xl bg-neutral-100 p-1">
+          <button
+            onClick={() => setMode("existing")}
+            disabled={jobs.length === 0}
+            className={`flex-1 rounded-lg py-2 text-sm font-medium transition disabled:opacity-40 ${
+              mode === "existing" ? "bg-white shadow-soft" : "text-neutral-500"
+            }`}
+          >
+            Existujúci kontakt
+          </button>
+          <button
+            onClick={() => setMode("new")}
+            className={`flex-1 rounded-lg py-2 text-sm font-medium transition ${
+              mode === "new" ? "bg-white shadow-soft" : "text-neutral-500"
+            }`}
+          >
+            Nový kontakt
+          </button>
+        </div>
+
+        {mode === "existing" ? (
+          <div className="mt-4 space-y-3">
+            <label className="block">
+              <span className="text-xs font-medium text-neutral-500">Koho ideš robiť</span>
+              <select
+                value={pickId}
+                onChange={(e) => setPickId(e.target.value)}
+                className="mt-1 w-full rounded-lg border-2 border-neutral-300 bg-white px-3 py-2.5 text-base shadow-soft outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+              >
+                {jobs.map((j) => (
+                  <option key={j.id} value={j.id}>
+                    {(j.customer.name ?? "Bez mena") + (j.customer.obec ? " · " + j.customer.obec : "")}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <DurationField days={days} onChange={setDays} />
+            <button
+              onClick={saveExisting}
+              className="w-full rounded-xl bg-brand-600 py-3 text-base font-medium text-white shadow-soft transition hover:bg-brand-700"
+            >
+              Naplánovať na {date.getDate()}. {date.getMonth() + 1}.
+            </button>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Meno a priezvisko"
+              className="w-full rounded-lg border-2 border-neutral-300 bg-white px-3 py-2.5 text-base shadow-soft outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+            />
+            <div className="flex gap-2">
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Telefón"
+                inputMode="tel"
+                className="min-w-0 flex-1 rounded-lg border-2 border-neutral-300 bg-white px-3 py-2.5 text-base shadow-soft outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+              />
+              <input
+                value={obec}
+                onChange={(e) => setObec(e.target.value)}
+                placeholder="Obec"
+                className="min-w-0 flex-1 rounded-lg border-2 border-neutral-300 bg-white px-3 py-2.5 text-base shadow-soft outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+              />
+            </div>
+            <DurationField days={days} onChange={setDays} />
+            <button
+              onClick={saveNew}
+              disabled={!name && !phone && !obec}
+              className="w-full rounded-xl bg-brand-600 py-3 text-base font-medium text-white shadow-soft transition hover:bg-brand-700 disabled:opacity-40"
+            >
+              Vytvoriť a naplánovať
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DurationField({ days, onChange }: { days: number; onChange: (n: number) => void }) {
+  return (
+    <label className="flex items-center justify-between gap-3">
+      <span className="text-sm text-neutral-600">Koľko dní bude trvať</span>
+      <span className="flex items-center gap-1.5">
+        <input
+          inputMode="numeric"
+          value={days}
+          onChange={(e) => {
+            const n = parseInt(e.target.value, 10);
+            onChange(Number.isFinite(n) && n > 0 ? n : 1);
+          }}
+          className="w-20 rounded-lg border-2 border-neutral-300 bg-white px-3 py-2.5 text-right text-base tabular-nums shadow-soft outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+        />
+        <span className="w-8 text-sm text-neutral-400">dní</span>
+      </span>
+    </label>
   );
 }
